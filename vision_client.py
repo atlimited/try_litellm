@@ -4,7 +4,7 @@ import base64
 from openai import OpenAI
 
 client = OpenAI(
-    base_url="http://0.0.0.0:8000/v1" # litellm-proxy-base url
+    base_url="http://0.0.0.0:4000/v1" # litellm-proxy-base url
 )
 
 def get_base64_encoded_image(image_url):
