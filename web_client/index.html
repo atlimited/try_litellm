@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiteLLM API クライアント</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>LiteLLM API クライアント</h1>
+            <p>litellm プロキシを使用して各種 AI API にアクセスします</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-button active" data-tab="text">テキスト生成</button>
+            <button class="tab-button" data-tab="image">画像生成</button>
+            <button class="tab-button" data-tab="tts">音声生成</button>
+            <button class="tab-button" data-tab="vision">画像認識</button>
+            <button class="tab-button" data-tab="speech">音声認識</button>
+        </div>
+
+        <div class="tab-content">
+            <!-- テキスト生成タブ -->
+            <div class="tab-pane active" id="text-tab">
+                <h2>テキスト生成</h2>
+                <div class="form-group">
+                    <label for="text-model">モデル選択:</label>
+                    <select id="text-model">
+                        <option value="gpt-4o-mini">GPT-4o Mini</option>
+                        <option value="Meta-Llama-3.2-3B-Instruct">Meta Llama 3.2 3B Instruct</option>
+                        <option value="Meta-Llama-3.3-70B-Instruct">Meta Llama 3.3 70B Instruct</option>
+                        <option value="Llama-4-Maverick-17B-128E-Instruct">Llama 4 Maverick 17B</option>
+                        <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="text-prompt">プロンプト:</label>
+                    <textarea id="text-prompt" rows="4" placeholder="質問や指示を入力してください...">こんにちは！今日の天気について教えてください。</textarea>
+                </div>
+                <button id="generate-text" class="action-button">テキスト生成</button>
+                <div class="result-container">
+                    <h3>結果:</h3>
+                    <div id="text-result" class="result-box"></div>
+                </div>
+            </div>
+
+            <!-- 画像生成タブ -->
+            <div class="tab-pane" id="image-tab">
+                <h2>画像生成</h2>
+                <div class="form-group">
+                    <label for="image-model">モデル選択:</label>
+                    <select id="image-model">
+                        <option value="dall-e-3">DALL-E 3</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="image-size">サイズ:</label>
+                    <select id="image-size">
+                        <option value="1024x1024">1024x1024</option>
+                        <option value="1792x1024">1792x1024 (横長)</option>
+                        <option value="1024x1792">1024x1792 (縦長)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="image-quality">品質:</label>
+                    <select id="image-quality">
+                        <option value="standard">標準</option>
+                        <option value="hd">高品質</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="image-prompt">プロンプト:</label>
+                    <textarea id="image-prompt" rows="4" placeholder="生成したい画像の説明を入力してください...">A futuristic Japanese garden with cherry blossoms, traditional elements, and modern technology integrated seamlessly.</textarea>
+                </div>
+                <button id="generate-image" class="action-button">画像生成</button>
+                <div class="result-container">
+                    <h3>結果:</h3>
+                    <div id="image-loading" class="loading-indicator hidden">生成中...</div>
+                    <div id="image-result" class="result-box image-result"></div>
+                </div>
+            </div>
+
+            <!-- 音声生成タブ -->
+            <div class="tab-pane" id="tts-tab">
+                <h2>テキスト読み上げ (TTS)</h2>
+                <div class="form-group">
+                    <label for="tts-model">モデル選択:</label>
+                    <select id="tts-model">
+                        <option value="tts-1">TTS-1</option>
+                        <option value="tts-1-hd">TTS-1-HD</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="tts-voice">声:</label>
+                    <select id="tts-voice">
+                        <option value="alloy">Alloy (バランス)</option>
+                        <option value="echo">Echo (男性)</option>
+                        <option value="fable">Fable (くつろいだ)</option>
+                        <option value="onyx">Onyx (力強い)</option>
+                        <option value="nova">Nova (女性)</option>
+                        <option value="shimmer">Shimmer (明るい)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="tts-text">テキスト:</label>
+                    <textarea id="tts-text" rows="4" placeholder="読み上げたいテキストを入力してください...">こんにちは。これはLiteLLMプロキシを通じて生成された音声サンプルです。Text-to-Speech APIを使用して、テキストから音声への変換を行っています。</textarea>
+                </div>
+                <button id="generate-tts" class="action-button">音声生成</button>
+                <div class="result-container">
+                    <h3>結果:</h3>
+                    <div id="tts-loading" class="loading-indicator hidden">生成中...</div>
+                    <div id="tts-result" class="result-box audio-result"></div>
+                </div>
+            </div>
+
+            <!-- 画像認識タブ -->
+            <div class="tab-pane" id="vision-tab">
+                <h2>画像認識 (Vision)</h2>
+                <div class="form-group">
+                    <label for="vision-model">モデル選択:</label>
+                    <select id="vision-model">
+                        <option value="Llama-4-Maverick-17B-128E-Instruct">Llama 4 Maverick 17B</option>
+                        <option value="gpt-4o-mini">GPT-4o Mini</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="vision-image">画像:</label>
+                    <div class="file-input-container">
+                        <input type="file" id="vision-image" accept="image/*">
+                        <p class="file-hint">または画像URLを入力:</p>
+                        <input type="text" id="vision-image-url" placeholder="https://example.com/image.jpg">
+                    </div>
+                    <div id="vision-image-preview" class="image-preview"></div>
+                </div>
+                <div class="form-group">
+                    <label for="vision-prompt">プロンプト/質問:</label>
+                    <textarea id="vision-prompt" rows="4" placeholder="画像について質問や指示を入力してください...">この画像に何が写っていますか？詳しく説明してください。</textarea>
+                </div>
+                <button id="analyze-image" class="action-button">画像分析</button>
+                <div class="result-container">
+                    <h3>結果:</h3>
+                    <div id="vision-loading" class="loading-indicator hidden">分析中...</div>
+                    <div id="vision-result" class="result-box"></div>
+                </div>
+            </div>
+
+            <!-- 音声認識タブ -->
+            <div class="tab-pane" id="speech-tab">
+                <h2>音声認識 (Speech-to-Text)</h2>
+                <div class="form-group">
+                    <label for="speech-model">モデル選択:</label>
+                    <select id="speech-model">
+                        <option value="whisper-1">Whisper-1</option>
+                        <option value="Whisper-Large-v3">Whisper-Large-v3</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>音声ファイル:</label>
+                    <div class="file-input-container">
+                        <input type="file" id="speech-audio" accept="audio/*">
+                        <p class="file-hint">または録音する:</p>
+                        <div class="record-controls">
+                            <button id="record-start" class="control-button">録音開始</button>
+                            <button id="record-stop" class="control-button" disabled>録音停止</button>
+                            <span id="recording-status"></span>
+                        </div>
+                    </div>
+                    <div id="audio-preview" class="audio-preview hidden">
+                        <audio id="audio-player" controls></audio>
+                    </div>
+                </div>
+                <button id="transcribe-audio" class="action-button">音声文字起こし</button>
+                <div class="result-container">
+                    <h3>結果:</h3>
+                    <div id="speech-loading" class="loading-indicator hidden">文字起こし中...</div>
+                    <div id="speech-result" class="result-box"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
