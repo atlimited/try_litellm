@@ -15,10 +15,10 @@
 
         <div class="tabs">
             <button class="tab-button active" data-tab="text">テキスト生成</button>
-            <button class="tab-button" data-tab="image">画像生成</button>
-            <button class="tab-button" data-tab="tts">音声生成</button>
             <button class="tab-button" data-tab="vision">画像認識</button>
             <button class="tab-button" data-tab="speech">音声認識</button>
+            <button class="tab-button" data-tab="image">画像生成</button>
+            <button class="tab-button" data-tab="tts">音声生成</button>
         </div>
 
         <div class="tab-content">
@@ -58,89 +58,6 @@
                         <button class="reset-results" data-tab="text">リセット</button>
                     </div>
                     <div id="text-result" class="result-box"></div>
-                </div>
-            </div>
-
-            <!-- 画像生成タブ -->
-            <div class="tab-pane" id="image-tab">
-                <h2>画像生成</h2>
-                <div class="form-group">
-                    <label for="image-model">モデル選択:</label>
-                    <select id="image-model">
-                        <option value="OpenAI/dall-e-3">OpenAI DALL-E 3</option>
-                        <option value="Google/gemini-2.0-flash">Google Gemini 2.0 Flash</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="image-size">サイズ:</label>
-                    <select id="image-size">
-                        <option value="1024x1024">1024x1024</option>
-                        <option value="1792x1024">1792x1024 (横長)</option>
-                        <option value="1024x1792">1024x1792 (縦長)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="image-quality">品質:</label>
-                    <select id="image-quality">
-                        <option value="standard">標準</option>
-                        <option value="hd">高品質</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="image-prompt">プロンプト:</label>
-                    <textarea id="image-prompt" rows="4" placeholder="生成したい画像の説明を入力してください...">A futuristic Japanese garden with cherry blossoms, traditional elements, and modern technology integrated seamlessly.</textarea>
-                </div>
-                <button id="generate-image" class="action-button">画像生成</button>
-                <div class="form-group response-time-container">
-                    <p>処理時間: <span class="image-response-time">-</span> ms</p>
-                </div>
-                <div class="result-container">
-                    <div class="result-header">
-                        <h3>結果:</h3>
-                        <button class="reset-results" data-tab="image">リセット</button>
-                    </div>
-                    <div id="image-loading" class="loading-indicator hidden">生成中...</div>
-                    <div id="image-result" class="result-box image-result"></div>
-                </div>
-            </div>
-
-            <!-- 音声生成タブ -->
-            <div class="tab-pane" id="tts-tab">
-                <h2>テキスト読み上げ (TTS)</h2>
-                <div class="form-group">
-                    <label for="tts-model">モデル選択:</label>
-                    <select id="tts-model">
-                        <option value="OpenAI/tts-1">OpenAI TTS-1</option>
-                        <option value="OpenAI/tts-1-hd">OpenAI TTS-1-HD</option>
-                        <option value="Google/gemini-2.0-flash">Google Gemini 2.0 Flash</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="tts-voice">声:</label>
-                    <select id="tts-voice">
-                        <option value="alloy">Alloy (バランス)</option>
-                        <option value="echo">Echo (男性)</option>
-                        <option value="fable">Fable (くつろいだ)</option>
-                        <option value="onyx">Onyx (力強い)</option>
-                        <option value="nova">Nova (女性)</option>
-                        <option value="shimmer">Shimmer (明るい)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="tts-text">テキスト:</label>
-                    <textarea id="tts-text" rows="4" placeholder="読み上げたいテキストを入力してください...">こんにちは。これはLiteLLMプロキシを通じて生成された音声サンプルです。Text-to-Speech APIを使用して、テキストから音声への変換を行っています。</textarea>
-                </div>
-                <button id="generate-tts" class="action-button">音声生成</button>
-                <div class="form-group response-time-container">
-                    <p>処理時間: <span class="tts-response-time">-</span> ms</p>
-                </div>
-                <div class="result-container">
-                    <div class="result-header">
-                        <h3>結果:</h3>
-                        <button class="reset-results" data-tab="tts">リセット</button>
-                    </div>
-                    <div id="tts-loading" class="loading-indicator hidden">生成中...</div>
-                    <div id="tts-result" class="result-box audio-result"></div>
                 </div>
             </div>
 
@@ -235,6 +152,90 @@
                     <div id="speech-result" class="result-box"></div>
                 </div>
             </div>
+
+            <!-- 画像生成タブ -->
+            <div class="tab-pane" id="image-tab">
+                <h2>画像生成</h2>
+                <div class="form-group">
+                    <label for="image-model">モデル選択:</label>
+                    <select id="image-model">
+                        <option value="OpenAI/dall-e-3">OpenAI DALL-E 3</option>
+                        <option value="Google/gemini-2.0-flash">Google Gemini 2.0 Flash</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="image-size">サイズ:</label>
+                    <select id="image-size">
+                        <option value="1024x1024">1024x1024</option>
+                        <option value="1792x1024">1792x1024 (横長)</option>
+                        <option value="1024x1792">1024x1792 (縦長)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="image-quality">品質:</label>
+                    <select id="image-quality">
+                        <option value="standard">標準</option>
+                        <option value="hd">高品質</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="image-prompt">プロンプト:</label>
+                    <textarea id="image-prompt" rows="4" placeholder="生成したい画像の説明を入力してください...">A futuristic Japanese garden with cherry blossoms, traditional elements, and modern technology integrated seamlessly.</textarea>
+                </div>
+                <button id="generate-image" class="action-button">画像生成</button>
+                <div class="form-group response-time-container">
+                    <p>処理時間: <span class="image-response-time">-</span> ms</p>
+                </div>
+                <div class="result-container">
+                    <div class="result-header">
+                        <h3>結果:</h3>
+                        <button class="reset-results" data-tab="image">リセット</button>
+                    </div>
+                    <div id="image-loading" class="loading-indicator hidden">生成中...</div>
+                    <div id="image-result" class="result-box image-result"></div>
+                </div>
+            </div>
+
+            <!-- 音声生成タブ -->
+            <div class="tab-pane" id="tts-tab">
+                <h2>テキスト読み上げ (TTS)</h2>
+                <div class="form-group">
+                    <label for="tts-model">モデル選択:</label>
+                    <select id="tts-model">
+                        <option value="OpenAI/tts-1">OpenAI TTS-1</option>
+                        <option value="OpenAI/tts-1-hd">OpenAI TTS-1-HD</option>
+                        <option value="Google/gemini-2.0-flash">Google Gemini 2.0 Flash</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="tts-voice">声:</label>
+                    <select id="tts-voice">
+                        <option value="alloy">Alloy (バランス)</option>
+                        <option value="echo">Echo (男性)</option>
+                        <option value="fable">Fable (くつろいだ)</option>
+                        <option value="onyx">Onyx (力強い)</option>
+                        <option value="nova">Nova (女性)</option>
+                        <option value="shimmer">Shimmer (明るい)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="tts-text">テキスト:</label>
+                    <textarea id="tts-text" rows="4" placeholder="読み上げたいテキストを入力してください...">こんにちは。これはLiteLLMプロキシを通じて生成された音声サンプルです。Text-to-Speech APIを使用して、テキストから音声への変換を行っています。</textarea>
+                </div>
+                <button id="generate-tts" class="action-button">音声生成</button>
+                <div class="form-group response-time-container">
+                    <p>処理時間: <span class="tts-response-time">-</span> ms</p>
+                </div>
+                <div class="result-container">
+                    <div class="result-header">
+                        <h3>結果:</h3>
+                        <button class="reset-results" data-tab="tts">リセット</button>
+                    </div>
+                    <div id="tts-loading" class="loading-indicator hidden">生成中...</div>
+                    <div id="tts-result" class="result-box audio-result"></div>
+                </div>
+            </div>
+
         </div>
         
         <div class="global-controls">
