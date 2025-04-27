@@ -13,13 +13,252 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('analyze-image').addEventListener('click', analyzeImage);
     document.getElementById('transcribe-audio').addEventListener('click', transcribeAudio);
     
+    // リセットボタンにイベントリスナーを設定
+    document.querySelectorAll('.reset-results').forEach(button => {
+        button.addEventListener('click', function() {
+            const tabId = this.getAttribute('data-tab');
+            resetResults(tabId);
+            updateSavedResultsView(); // 保存結果表示を更新
+        });
+    });
+    
     // 画像認識の画像ファイル入力とURLの設定
     setupVisionImageInput();
     
     // 音声認識の音声ファイル入力と録音機能の設定
     setupSpeechAudioInput();
     setupAudioRecording();
+    
+    // 保存されている結果を読み込む
+    loadStoredResults();
+    
+    // 保存結果一覧を表示
+    updateSavedResultsView();
 });
+
+// 結果を保存
+function saveResult(tabId, result, processingTime, model) {
+    // 既存の結果リストを取得
+    let resultsList = JSON.parse(localStorage.getItem(`${tabId}Results`) || '[]');
+    
+    // 新しい結果を追加
+    resultsList.push({
+        result: result,
+        processingTime: processingTime,
+        model: model,
+        date: new Date().toISOString()
+    });
+    
+    // ローカルストレージに保存
+    localStorage.setItem(`${tabId}Results`, JSON.stringify(resultsList));
+}
+
+// 保存結果一覧を表示
+function updateSavedResultsView() {
+    const container = document.getElementById('saved-results-container');
+    container.innerHTML = ''; // 既存のコンテンツをクリア
+    
+    const savedResults = getSavedResults();
+    
+    if (Object.keys(savedResults).length === 0) {
+        container.innerHTML = '<div class="no-saved-results">保存された結果はありません</div>';
+        return;
+    }
+    
+    // すべての結果をフラット化して日付でソート
+    let allResults = [];
+    for (const [tabId, resultsList] of Object.entries(savedResults)) {
+        resultsList.forEach(data => {
+            allResults.push({
+                tabId,
+                ...data
+            });
+        });
+    }
+    
+    // 日付の新しい順にソート
+    allResults.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    // 表示
+    allResults.forEach(data => {
+        const card = document.createElement('div');
+        card.className = 'saved-result-card';
+        
+        // タブ名を表示用の名前に変換
+        let tabName;
+        switch(data.tabId) {
+            case 'text': tabName = 'テキスト生成'; break;
+            case 'image': tabName = '画像生成'; break;
+            case 'tts': tabName = '音声生成'; break;
+            case 'vision': tabName = '画像認識'; break;
+            case 'speech': tabName = '音声認識'; break;
+            default: tabName = data.tabId;
+        }
+        
+        // 最大100文字までの内容を表示
+        let content = data.result || "";
+        if (content.length > 100) {
+            content = content.substring(0, 100) + '...';
+        }
+        // HTMLタグを除去（ただし基本的なフォーマットは保持）
+        content = content.replace(/<(?!br\s*\/?)[^>]+>/g, '');
+        
+        // 日時を日本語フォーマットに
+        const date = data.date ? new Date(data.date) : new Date();
+        const dateStr = `${date.getFullYear()}年${date.getMonth()+1}月${date.getDate()}日 ${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
+        
+        card.innerHTML = `
+            <h3>${tabName}</h3>
+            <div class="saved-result-info">
+                <p>モデル: <span>${data.model || '不明'}</span></p>
+                <p>処理時間: <span>${data.processingTime || '-'} ms</span></p>
+                <p>保存日時: <span>${dateStr}</span></p>
+            </div>
+            <div class="saved-result-content">${content}</div>
+            <div class="saved-result-actions">
+                <button class="view-result" data-tab="${data.tabId}" data-index="${data.index}">表示</button>
+                <button class="delete-result" data-tab="${data.tabId}" data-index="${data.index}">削除</button>
+            </div>
+        `;
+        
+        container.appendChild(card);
+    });
+    
+    // ボタンのイベントリスナーを設定
+    container.querySelectorAll('.view-result').forEach(button => {
+        button.addEventListener('click', function() {
+            const tabId = this.getAttribute('data-tab');
+            const index = this.getAttribute('data-index');
+            // 対応するタブを表示
+            document.querySelector(`.tab-button[data-tab="${tabId}"]`).click();
+            
+            // 該当する結果を表示
+            displayResult(tabId, index);
+        });
+    });
+    
+    container.querySelectorAll('.delete-result').forEach(button => {
+        button.addEventListener('click', function() {
+            const tabId = this.getAttribute('data-tab');
+            const index = this.getAttribute('data-index');
+            
+            // 特定の結果を削除
+            deleteResult(tabId, index);
+            updateSavedResultsView(); // 削除後に表示を更新
+        });
+    });
+}
+
+// 特定のタブの特定のインデックスの結果を削除
+function deleteResult(tabId, index) {
+    let resultsList = JSON.parse(localStorage.getItem(`${tabId}Results`) || '[]');
+    if (index && index < resultsList.length) {
+        resultsList.splice(index, 1);
+        localStorage.setItem(`${tabId}Results`, JSON.stringify(resultsList));
+    }
+}
+
+// 特定のタブの特定のインデックスの結果を表示
+function displayResult(tabId, index) {
+    if (!index) return;
+    
+    let resultsList = JSON.parse(localStorage.getItem(`${tabId}Results`) || '[]');
+    if (index < resultsList.length) {
+        const data = resultsList[index];
+        
+        // 該当するタブの結果表示領域に表示
+        document.getElementById(`${tabId}-result`).innerHTML = data.result;
+        document.querySelector(`.${tabId}-response-time`).textContent = data.processingTime || '-';
+        
+        // モデル選択を更新（存在する場合）
+        const modelSelector = document.getElementById(`${tabId}-model`);
+        if (modelSelector && data.model) {
+            modelSelector.value = data.model;
+        }
+    }
+}
+
+// 保存されているすべての結果を取得
+function getSavedResults() {
+    const savedResults = {};
+    
+    // 各タブの結果リストを取得
+    const tabs = ['text', 'image', 'tts', 'vision', 'speech'];
+    
+    tabs.forEach(tabId => {
+        const resultsList = JSON.parse(localStorage.getItem(`${tabId}Results`) || '[]');
+        if (resultsList.length > 0) {
+            // 各結果にインデックスを追加
+            savedResults[tabId] = resultsList.map((result, index) => ({
+                ...result,
+                index
+            }));
+        }
+    });
+    
+    return savedResults;
+}
+
+// 保存された結果を読み込む
+function loadStoredResults() {
+    // 以前の単一の結果も読み込んで新形式に変換（一度だけの移行用）
+    const tabs = ['text', 'image', 'tts', 'vision', 'speech'];
+    
+    tabs.forEach(tabId => {
+        // 新形式のデータがまだなく、旧形式のデータがある場合
+        if (!localStorage.getItem(`${tabId}Results`) && localStorage.getItem(`${tabId}Result`)) {
+            const oldResult = localStorage.getItem(`${tabId}Result`);
+            const oldTime = localStorage.getItem(`${tabId}ResponseTime`);
+            const oldModel = localStorage.getItem(`${tabId}Model`);
+            const oldDate = localStorage.getItem(`${tabId}Date`) || new Date().toISOString();
+            
+            // 新形式に変換
+            const newResults = [{
+                result: oldResult,
+                processingTime: oldTime,
+                model: oldModel,
+                date: oldDate
+            }];
+            
+            // 保存
+            localStorage.setItem(`${tabId}Results`, JSON.stringify(newResults));
+            
+            // 旧形式のデータをクリア
+            localStorage.removeItem(`${tabId}Result`);
+            localStorage.removeItem(`${tabId}ResponseTime`);
+            localStorage.removeItem(`${tabId}Model`);
+            localStorage.removeItem(`${tabId}Date`);
+        }
+        
+        // 結果を表示
+        const resultsList = JSON.parse(localStorage.getItem(`${tabId}Results`) || '[]');
+        if (resultsList.length > 0) {
+            // 最新の結果を表示
+            const latestResult = resultsList[resultsList.length - 1];
+            document.getElementById(`${tabId}-result`).innerHTML = latestResult.result;
+            document.querySelector(`.${tabId}-response-time`).textContent = latestResult.processingTime || '-';
+            
+            // モデル選択を更新（存在する場合）
+            const modelSelector = document.getElementById(`${tabId}-model`);
+            if (modelSelector && latestResult.model) {
+                modelSelector.value = latestResult.model;
+            }
+        }
+    });
+}
+
+// リセット機能
+function resetResults(tabId) {
+    if (tabId === 'all') {
+        localStorage.clear();
+        document.querySelectorAll('.result-box').forEach(el => el.innerHTML = '');
+        document.querySelectorAll('.response-time-container span').forEach(el => el.textContent = '-');
+    } else {
+        localStorage.removeItem(`${tabId}Results`);
+        document.getElementById(`${tabId}-result`).innerHTML = '';
+        document.querySelector(`.${tabId}-response-time`).textContent = '-';
+    }
+}
 
 // タブ切り替え機能の設定
 function setupTabs() {
@@ -95,10 +334,22 @@ async function generateText() {
         const endTime = performance.now();
         const processingTime = Math.round(endTime - startTime);
         responseTimeElement.textContent = processingTime;
+        
+        // 結果を保存
+        saveResult('text', resultElement.innerHTML, processingTime, model);
+        
+        // 保存結果一覧を更新
+        updateSavedResultsView();
     } catch (error) {
         resultElement.textContent = `エラーが発生しました: ${error.message}`;
         console.error('テキスト生成中にエラーが発生しました:', error);
         responseTimeElement.textContent = '-';
+        
+        // エラー結果も保存
+        saveResult('text', resultElement.innerHTML, '-', model);
+        
+        // 保存結果一覧を更新
+        updateSavedResultsView();
     } finally {
         // ボタンを再有効化
         button.disabled = false;
@@ -158,7 +409,7 @@ async function generateImage() {
         // 画像を表示
         const img = document.createElement('img');
         img.src = imageUrl;
-        img.alt = prompt;
+        img.alt = 'Generated image';
         
         resultElement.innerHTML = '';
         resultElement.appendChild(img);
@@ -175,10 +426,22 @@ async function generateImage() {
         const endTime = performance.now();
         const processingTime = Math.round(endTime - startTime);
         responseTimeElement.textContent = processingTime;
+        
+        // 結果を保存
+        saveResult('image', resultElement.innerHTML, processingTime, model);
+        
+        // 保存結果一覧を更新
+        updateSavedResultsView();
     } catch (error) {
         resultElement.textContent = `エラーが発生しました: ${error.message}`;
         console.error('画像生成中にエラーが発生しました:', error);
         responseTimeElement.textContent = '-';
+        
+        // エラー結果も保存
+        saveResult('image', resultElement.innerHTML, '-', model);
+        
+        // 保存結果一覧を更新
+        updateSavedResultsView();
     } finally {
         // ボタンとローディングインジケーターを更新
         button.disabled = false;
@@ -252,89 +515,28 @@ async function generateTTS() {
         const endTime = performance.now();
         const processingTime = Math.round(endTime - startTime);
         responseTimeElement.textContent = processingTime;
+        
+        // 結果を保存
+        saveResult('tts', resultElement.innerHTML, processingTime, model);
+        
+        // 保存結果一覧を更新
+        updateSavedResultsView();
     } catch (error) {
         resultElement.textContent = `エラーが発生しました: ${error.message}`;
         console.error('音声生成中にエラーが発生しました:', error);
         responseTimeElement.textContent = '-';
+        
+        // エラー結果も保存
+        saveResult('tts', resultElement.innerHTML, '-', model);
+        
+        // 保存結果一覧を更新
+        updateSavedResultsView();
     } finally {
         // ボタンとローディングインジケーターを更新
         button.disabled = false;
         button.textContent = '音声生成';
         loadingIndicator.classList.add('hidden');
     }
-}
-
-// Vision機能: 画像ファイル入力の設定
-function setupVisionImageInput() {
-    const imageFileInput = document.getElementById('vision-image');
-    const imageUrlInput = document.getElementById('vision-image-url');
-    const imagePreview = document.getElementById('vision-image-preview');
-    
-    // ファイル選択時のプレビュー表示
-    imageFileInput.addEventListener('change', (event) => {
-        if (event.target.files && event.target.files[0]) {
-            const file = event.target.files[0];
-            const reader = new FileReader();
-            
-            reader.onload = (e) => {
-                // 画像プレビューを表示
-                imagePreview.innerHTML = '';
-                const img = document.createElement('img');
-                img.src = e.target.result;
-                img.alt = 'Selected image';
-                imagePreview.appendChild(img);
-                
-                // URL入力欄をクリア（ファイルが優先）
-                imageUrlInput.value = '';
-            };
-            
-            reader.readAsDataURL(file);
-        }
-    });
-    
-    // URL入力時のプレビュー表示
-    imageUrlInput.addEventListener('input', debounce(async (event) => {
-        const url = event.target.value.trim();
-        if (url) {
-            try {
-                // 画像プレビューを表示
-                imagePreview.innerHTML = '';
-                const img = document.createElement('img');
-                img.src = url;
-                img.alt = 'Image from URL';
-                img.onerror = () => {
-                    imagePreview.innerHTML = '<p style="color: red;">画像を読み込めませんでした。有効なURLを入力してください。</p>';
-                };
-                imagePreview.appendChild(img);
-                
-                // ファイル入力をクリア
-                imageFileInput.value = '';
-            } catch (error) {
-                imagePreview.innerHTML = '<p style="color: red;">画像の読み込み中にエラーが発生しました。</p>';
-            }
-        }
-    }, 500));
-}
-
-// 入力のdebounce処理
-function debounce(func, delay) {
-    let debounceTimer;
-    return function() {
-        const context = this;
-        const args = arguments;
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => func.apply(context, args), delay);
-    };
-}
-
-// 画像をBase64エンコードする関数
-async function getBase64FromFile(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
-    });
 }
 
 // 画像分析機能
@@ -418,10 +620,22 @@ async function analyzeImage() {
         const endTime = performance.now();
         const processingTime = Math.round(endTime - startTime);
         responseTimeElement.textContent = processingTime;
+        
+        // 結果を保存
+        saveResult('vision', resultElement.innerHTML, processingTime, model);
+        
+        // 保存結果一覧を更新
+        updateSavedResultsView();
     } catch (error) {
         resultElement.textContent = `エラーが発生しました: ${error.message}`;
         console.error('画像分析中にエラーが発生しました:', error);
         responseTimeElement.textContent = '-';
+        
+        // エラー結果も保存
+        saveResult('vision', resultElement.innerHTML, '-', model);
+        
+        // 保存結果一覧を更新
+        updateSavedResultsView();
     } finally {
         // ボタンとローディングインジケーターを更新
         button.disabled = false;
@@ -654,14 +868,47 @@ async function transcribeAudio() {
         const endTime = performance.now();
         const processingTime = Math.round(endTime - startTime);
         responseTimeElement.textContent = processingTime;
+        
+        // 結果を保存
+        saveResult('speech', resultElement.innerHTML, processingTime, model);
+        
+        // 保存結果一覧を更新
+        updateSavedResultsView();
     } catch (error) {
         resultElement.textContent = `エラーが発生しました: ${error.message}`;
         console.error('音声文字起こし中にエラーが発生しました:', error);
         responseTimeElement.textContent = '-';
+        
+        // エラー結果も保存
+        saveResult('speech', resultElement.innerHTML, '-', model);
+        
+        // 保存結果一覧を更新
+        updateSavedResultsView();
     } finally {
         // ボタンとローディングインジケーターを更新
         button.disabled = false;
         button.textContent = '音声文字起こし';
         loadingIndicator.classList.add('hidden');
     }
+}
+
+// 画像をBase64エンコードする関数
+async function getBase64FromFile(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+}
+
+// 入力のdebounce処理
+function debounce(func, delay) {
+    let debounceTimer;
+    return function() {
+        const context = this;
+        const args = arguments;
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => func.apply(context, args), delay);
+    };
 }

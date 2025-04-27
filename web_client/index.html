@@ -49,7 +49,10 @@
                     <p>処理時間: <span class="text-response-time">-</span> ms</p>
                 </div>
                 <div class="result-container">
-                    <h3>結果:</h3>
+                    <div class="result-header">
+                        <h3>結果:</h3>
+                        <button class="reset-results" data-tab="text">リセット</button>
+                    </div>
                     <div id="text-result" class="result-box"></div>
                 </div>
             </div>
@@ -87,7 +90,10 @@
                     <p>処理時間: <span class="image-response-time">-</span> ms</p>
                 </div>
                 <div class="result-container">
-                    <h3>結果:</h3>
+                    <div class="result-header">
+                        <h3>結果:</h3>
+                        <button class="reset-results" data-tab="image">リセット</button>
+                    </div>
                     <div id="image-loading" class="loading-indicator hidden">生成中...</div>
                     <div id="image-result" class="result-box image-result"></div>
                 </div>
@@ -123,7 +129,10 @@
                     <p>処理時間: <span class="tts-response-time">-</span> ms</p>
                 </div>
                 <div class="result-container">
-                    <h3>結果:</h3>
+                    <div class="result-header">
+                        <h3>結果:</h3>
+                        <button class="reset-results" data-tab="tts">リセット</button>
+                    </div>
                     <div id="tts-loading" class="loading-indicator hidden">生成中...</div>
                     <div id="tts-result" class="result-box audio-result"></div>
                 </div>
@@ -158,7 +167,10 @@
                     <p>処理時間: <span class="vision-response-time">-</span> ms</p>
                 </div>
                 <div class="result-container">
-                    <h3>結果:</h3>
+                    <div class="result-header">
+                        <h3>結果:</h3>
+                        <button class="reset-results" data-tab="vision">リセット</button>
+                    </div>
                     <div id="vision-loading" class="loading-indicator hidden">分析中...</div>
                     <div id="vision-result" class="result-box"></div>
                 </div>
@@ -209,10 +221,25 @@
                     <p>処理時間: <span class="speech-response-time">-</span> ms</p>
                 </div>
                 <div class="result-container">
-                    <h3>結果:</h3>
+                    <div class="result-header">
+                        <h3>結果:</h3>
+                        <button class="reset-results" data-tab="speech">リセット</button>
+                    </div>
                     <div id="speech-loading" class="loading-indicator hidden">文字起こし中...</div>
                     <div id="speech-result" class="result-box"></div>
                 </div>
+            </div>
+        </div>
+        
+        <div class="global-controls">
+            <button class="reset-results" data-tab="all">すべての結果をリセット</button>
+        </div>
+        
+        <!-- 保存結果一覧 -->
+        <div class="saved-results-section">
+            <h2>保存された結果</h2>
+            <div id="saved-results-container" class="saved-results-container">
+                <div class="no-saved-results">保存された結果はありません</div>
             </div>
         </div>
     </div>
