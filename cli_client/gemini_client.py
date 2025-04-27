@@ -435,76 +435,6 @@ def transcribe_audio(
             print(f"レスポンス: {e.response.text}")
         return ""
 
-def text_to_speech(
-    text: str,
-    output_path: str = None,
-    voice: str = "alloy",
-    model: str = "gemini-2.0-flash"
-) -> str:
-    """
-    テキストを音声に変換する（音声合成）
-    Google Cloud Text-to-Speech APIを使用
-    
-    Args:
-        text: 音声に変換するテキスト
-        output_path: 生成した音声を保存するパス
-        voice: 音声のタイプ
-        model: 使用するモデル名（現在は使用されない）
-        
-    Returns:
-        生成された音声ファイルのパス
-    """
-    print(f"📝 テキスト: {text}")
-    print(f"🔊 音声タイプ: {voice}")
-    print(f"🤖 モデル: {model}")
-    print("🔄 音声を生成中...")
-    
-    # 出力パスが指定されていない場合は自動生成
-    if output_path is None:
-        timestamp = int(time.time())
-        os.makedirs("generated_audio", exist_ok=True)
-        output_path = f"generated_audio/speech_{voice}_{timestamp}.mp3"
-    
-    # ここでGemini APIの代わりにGoogle Text-to-Speech APIを使用します
-    # この実装ではOpenAI TTS APIを利用（簡単に利用できるため）
-    try:
-        # OpenAI TTS APIキー
-        OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
-        
-        if not OPENAI_API_KEY:
-            print("❌ OpenAI APIキーが設定されていません")
-            print("環境変数 OPENAI_API_KEY を設定してください")
-            return ""
-        
-        url = "https://api.openai.com/v1/audio/speech"
-        
-        headers = {
-            "Authorization": f"Bearer {OPENAI_API_KEY}",
-            "Content-Type": "application/json",
-        }
-        
-        payload = {
-            "model": "tts-1",
-            "input": text,
-            "voice": voice
-        }
-        
-        response = requests.post(url, headers=headers, json=payload)
-        response.raise_for_status()
-        
-        # バイナリデータを取得して保存
-        with open(output_path, "wb") as f:
-            f.write(response.content)
-            
-        print(f"✅ 音声を {output_path} に保存しました (OpenAI TTS使用)")
-        return output_path
-        
-    except Exception as e:
-        print(f"❌ エラーが発生しました: {str(e)}")
-        # デバッグ情報
-        if hasattr(e, 'response') and hasattr(e.response, 'text'):
-            print(f"レスポンス: {e.response.text}")
-        return ""
 
 def main():
     """メイン関数: コマンドライン引数を解析して機能を実行する"""
@@ -534,14 +464,6 @@ def main():
     speech_parser.add_argument("-l", "--language", help="言語コード", default="ja")
     speech_parser.add_argument("-m", "--model", help="使用するモデル", default="gemini-2.0-flash")
     
-    # テキスト音声変換コマンド
-    tts_parser = subparsers.add_parser("tts", help="テキストを音声に変換")
-    tts_parser.add_argument("text", help="音声に変換するテキスト", nargs='+')  # 複数の単語を1つの引数として扱う
-    tts_parser.add_argument("-o", "--output", help="出力ファイルパス", default=None)
-    tts_parser.add_argument("-v", "--voice", help="音声タイプ", 
-                        choices=["alloy", "echo", "fable", "onyx", "nova", "shimmer"], default="alloy")
-    tts_parser.add_argument("-m", "--model", help="使用するモデル", default="gemini-2.0-flash")
-    
     args = parser.parse_args()
     
     # サブコマンドに基づいて機能を実行
@@ -553,10 +475,6 @@ def main():
         chat_with_model(args.prompt, args.model)
     elif args.command == "speech":
         transcribe_audio(args.audio, args.language, args.model)
-    elif args.command == "tts":
-        # 複数の単語をスペースで結合して1つのテキストにする
-        text = ' '.join(args.text)
-        text_to_speech(text, args.output, args.voice, args.model)
     else:
         parser.print_help()
         sys.exit(1)
