@@ -3,7 +3,7 @@
 
 """
 Gemini マルチモーダルクライアント
-LiteLLM プロキシを通じて Gemini API を利用するためのクライアント
+Gemini API を直接呼び出すクライアント
 """
 
 import os
@@ -15,277 +15,551 @@ from typing import Optional, List, Dict, Any, Union
 import requests
 from PIL import Image
 import io
+import time
+import wave
+from pathlib import Path
 
-# LiteLLM プロキシの URL
-LITELLM_PROXY_URL = "http://localhost:4000/v1"
+# Gemini APIキー
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 
-def generate_image(
-    prompt: str, 
-    output_path: Optional[str],
-    model: str = "gemini-2.0-flash-exp-image-generation"
+# Gemini API エンドポイント
+GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
+
+def chat_with_model(
+    prompt: str,
+    model: str = "gemini-2.0-flash"
 ) -> str:
     """
-    Gemini モデルを使用して画像を生成する
+    AIモデルとチャットをする（テキストのみ）
+    Gemini APIを直接呼び出す
     
     Args:
-        prompt: 画像生成のためのプロンプト
-        output_path: 生成された画像を保存するパス（省略可能）
+        prompt: チャットプロンプト
         model: 使用するモデル名
         
     Returns:
-        生成された画像のパス、または出力パスが指定されていない場合は Base64 エンコードされた画像データ
+        生成されたテキスト回答
+    """
+    print(f"📝 プロンプト: {prompt}")
+    print(f"🤖 モデル: {model}")
+    print("🔄 応答を生成中...")
+    
+    # Geminiモデル名を正規化
+    model_name = model.replace("Google/", "")
+    
+    # APIエンドポイント（APIキーをクエリパラメータとして追加）
+    url = f"{GEMINI_API_BASE}/{model_name}:generateContent?key={GEMINI_API_KEY}"
+    
+    # ヘッダー
+    headers = {
+        "Content-Type": "application/json"
+    }
+    
+    # リクエスト本文
+    payload = {
+        "contents": [{
+            "parts": [{
+                "text": prompt
+            }]
+        }]
+    }
+    
+    try:
+        # API呼び出し
+        response = requests.post(url, headers=headers, json=payload)
+        response.raise_for_status()
+        
+        # レスポンスをパース
+        result = response.json()
+        
+        # テキスト回答を抽出
+        if "candidates" in result and len(result["candidates"]) > 0:
+            candidate = result["candidates"][0]
+            if "content" in candidate and "parts" in candidate["content"]:
+                for part in candidate["content"]["parts"]:
+                    if "text" in part:
+                        text_response = part["text"]
+                        print(f"\n📝 回答:\n{text_response}")
+                        return text_response
+        
+        print(f"❌ テキスト回答が見つかりません: {result}")
+        return ""
+        
+    except Exception as e:
+        print(f"❌ エラーが発生しました: {str(e)}")
+        # デバッグ情報
+        if hasattr(e, 'response') and hasattr(e.response, 'text'):
+            print(f"レスポンス: {e.response.text}")
+        return ""
+
+def generate_image(
+    prompt: str, 
+    output_path: str = "generated_images/generated_image.png",
+    model: str = "gemini-2.0-flash-exp-image-generation"
+) -> str:
+    """
+    プロンプトに基づいて画像を生成し、指定されたパスに保存する
+    Gemini APIを直接呼び出す
+    
+    Args:
+        prompt: 画像生成のプロンプト
+        output_path: 生成した画像を保存するパス
+        model: 使用するモデル名
+        
+    Returns:
+        生成された画像のパス
     """
     print(f"📝 プロンプト: {prompt}")
     print(f"🤖 モデル: {model}")
     print("🔄 画像を生成中...")
     
-    # Geminiの画像生成リクエストを構築
-    url = f"{LITELLM_PROXY_URL}/chat/completions"
+    # Geminiモデル名を正規化（Google/プレフィックスがあれば削除）
+    model_name = model.replace("Google/", "")
     
+    # Gemini APIエンドポイント
+    url = f"{GEMINI_API_BASE}/{model_name}:generateContent?key={GEMINI_API_KEY}"
+    
+    # ヘッダー
     headers = {
-        "Content-Type": "application/json",
+        "Content-Type": "application/json"
     }
     
-    # Geminiでは modalities パラメータが必要
+    # リクエスト本文 - Gemini 画像生成用の正しい形式
     payload = {
-        "model": model,
-        "messages": [{"role": "user", "content": prompt}],
-        "modalities": ["image", "text"],  # 画像と文字両方の機能を有効化
+        "contents": [{
+            "parts": [{
+                "text": prompt
+            }]
+        }],
+        "generationConfig": {
+            "temperature": 0.4,
+            "top_p": 1,
+            "top_k": 32,
+            "responseModalities": ["TEXT", "IMAGE"]
+        }
     }
     
     try:
+        # API呼び出し
         response = requests.post(url, headers=headers, json=payload)
-        response.raise_for_status()
+        response.raise_for_status()  # エラーがあれば例外を発生
         
         # レスポンスをパース
         result = response.json()
         
-        # レスポンス全体を表示（デバッグ用）
-        print(f"📊 レスポンス構造: {json.dumps(result, indent=2, ensure_ascii=False)}")
+        # デバッグ用にレスポンス全体を表示
+        print(f"📊 レスポンス: {json.dumps(result, indent=2, ensure_ascii=False)}")
         
-        # 画像データを取得（base64形式）
-        if "choices" in result and len(result["choices"]) > 0:
-            content = result["choices"][0]["message"]["content"]
+        # レスポンスから画像データを取得
+        if "candidates" in result and len(result["candidates"]) > 0:
+            candidate = result["candidates"][0]
+            if "content" in candidate and "parts" in candidate["content"]:
+                for part in candidate["content"]["parts"]:
+                    # 注意: JSONキー名は 'inline_data' ではなく 'inlineData'
+                    if "inlineData" in part and part["inlineData"]["mimeType"].startswith("image/"):
+                        # Base64エンコードされた画像データ
+                        image_data = base64.b64decode(part["inlineData"]["data"])
+                        
+                        # 出力ディレクトリが存在しない場合は作成
+                        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+                        
+                        # 画像を保存
+                        with open(output_path, "wb") as f:
+                            f.write(image_data)
+                        
+                        print(f"✅ 画像を {output_path} に保存しました")
+                        return output_path
+        
+        # 最新のImagen APIモデルを使う方法を試す
+        try:
+            imagen_url = "https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-flash:generateContent?key=" + GEMINI_API_KEY
             
-            # Base64エンコードされた画像データを取得
-            if content.startswith("data:image"):
-                # "data:image/png;base64," などのプレフィックスを除去
-                image_data = content.split(",", 1)[1]
-                
-                if output_path:
-                    # Base64をデコードして画像ファイルとして保存
-                    img_data = base64.b64decode(image_data)
-                    with open(output_path, "wb") as f:
-                        f.write(img_data)
-                    print(f"✅ 画像を {output_path} に保存しました")
-                    return output_path
-                else:
-                    # 出力パスが指定されていない場合は Base64 データを返す
-                    return content
-            else:
-                print(f"❌ 画像データが見つかりません: {content}")
-                return ""
-        else:
-            print(f"❌ 画像生成に失敗しました: {result}")
+            imagen_payload = {
+                "contents": [{
+                    "parts": [{
+                        "text": prompt
+                    }]
+                }]
+            }
+            
+            imagen_response = requests.post(imagen_url, headers=headers, json=imagen_payload)
+            imagen_response.raise_for_status()
+            
+            imagen_result = imagen_response.json()
+            print(f"📊 Imagen APIレスポンス: {json.dumps(imagen_result, indent=2, ensure_ascii=False)}")
+            
+            # 画像データ取得のロジック
+            if "candidates" in imagen_result and len(imagen_result["candidates"]) > 0:
+                candidate = imagen_result["candidates"][0]
+                if "content" in candidate and "parts" in candidate["content"]:
+                    for part in candidate["content"]["parts"]:
+                        # 注意: JSONキー名は 'inline_data' ではなく 'inlineData'
+                        if "inlineData" in part and part["inlineData"]["mimeType"].startswith("image/"):
+                            image_data = base64.b64decode(part["inlineData"]["data"])
+                            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+                            with open(output_path, "wb") as f:
+                                f.write(image_data)
+                            print(f"✅ Imagen APIで画像を {output_path} に保存しました")
+                            return output_path
+            
+            print("❌ 画像データが見つかりません")
             return ""
             
+        except Exception as alt_e:
+            print(f"❌ Imagen API呼び出しでエラーが発生しました: {str(alt_e)}")
+            if hasattr(alt_e, 'response') and hasattr(alt_e.response, 'text'):
+                print(f"レスポンス: {alt_e.response.text}")
+            return ""
+        
     except Exception as e:
         print(f"❌ エラーが発生しました: {str(e)}")
+        # デバッグ情報
         if hasattr(e, 'response') and hasattr(e.response, 'text'):
             print(f"レスポンス: {e.response.text}")
+        print(f"リクエスト: {json.dumps(payload, indent=2, ensure_ascii=False)}")
         return ""
 
 def get_base64_encoded_image(image_path: str) -> str:
     """
-    画像ファイルを Base64 エンコードする
+    画像ファイルをBase64エンコードした文字列を返す
     
     Args:
         image_path: 画像ファイルのパス
         
     Returns:
-        Base64 エンコードされた画像データ（MIMEタイプ付き）
+        Base64エンコードされた画像データ
     """
+    with open(image_path, "rb") as img_file:
+        img_data = img_file.read()
+        
+        # MIMEタイプを推測
+        ext = os.path.splitext(image_path)[1].lower()
+        mime_map = {
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.png': 'image/png',
+            '.gif': 'image/gif',
+            '.bmp': 'image/bmp',
+            '.webp': 'image/webp'
+        }
+        mime_type = mime_map.get(ext, 'image/jpeg')
+        
+        # Base64エンコード
+        return base64.b64encode(img_data).decode('utf-8')
+
+def analyze_image(
+    prompt: str,
+    image_path: str,
+    model: str = "gemini-2.0-flash"
+) -> str:
+    """
+    画像とテキストプロンプトを使用して応答を生成する
+    Gemini APIを直接呼び出す
+    
+    Args:
+        prompt: 画像に関する質問や指示
+        image_path: 分析する画像のパス
+        model: 使用するモデル名
+        
+    Returns:
+        生成されたテキスト回答
+    """
+    print(f"📝 プロンプト: {prompt}")
+    print(f"🖼️ 画像: {image_path}")
+    print(f"🤖 モデル: {model}")
+    print("🔄 画像を分析中...")
+    
+    # Geminiモデル名を正規化
+    model_name = model.replace("Google/", "")
+    
+    # 画像を読み込みBase64エンコード
+    image_base64 = get_base64_encoded_image(image_path)
+    
+    # 画像のMIMEタイプを取得
+    ext = os.path.splitext(image_path)[1].lower()
     mime_map = {
         '.jpg': 'image/jpeg',
         '.jpeg': 'image/jpeg',
         '.png': 'image/png',
         '.gif': 'image/gif',
-        '.webp': 'image/webp',
+        '.bmp': 'image/bmp',
+        '.webp': 'image/webp'
     }
+    mime_type = mime_map.get(ext, 'image/jpeg')
     
-    extension = os.path.splitext(image_path)[1].lower()
-    mime_type = mime_map.get(extension, 'image/jpeg')
+    # APIエンドポイント（APIキーをクエリパラメータとして追加）
+    url = f"{GEMINI_API_BASE}/{model_name}:generateContent?key={GEMINI_API_KEY}"
     
-    with open(image_path, "rb") as image_file:
-        encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
-    
-    return f"data:{mime_type};base64,{encoded_string}"
-
-def generate_response_with_image(
-    prompt: str,
-    image_path: str,
-    model: str = "gemini/gemini-2.0-flash"
-) -> str:
-    """
-    画像とテキストを使用して Gemini にリクエストを送信する
-    
-    Args:
-        prompt: テキストプロンプト
-        image_path: 画像ファイルのパス
-        model: 使用するモデル名
-        
-    Returns:
-        Gemini からの応答テキスト
-    """
-    print(f"📝 プロンプト: {prompt}")
-    print(f"🖼️ 画像: {image_path}")
-    print(f"🤖 モデル: {model}")
-    print("🔄 応答を生成中...")
-    
-    # 画像を Base64 エンコード
-    base64_image = get_base64_encoded_image(image_path)
-    
-    # Gemini のマルチモーダルリクエストを構築（メッセージの内容が配列になる点に注意）
-    url = f"{LITELLM_PROXY_URL}/chat/completions"
-    
+    # ヘッダー
     headers = {
-        "Content-Type": "application/json",
+        "Content-Type": "application/json"
     }
     
-    # Gemini では LiteLLM を通して以下のような形式でマルチモーダルメッセージを送信
+    # マルチモーダルリクエスト本文
     payload = {
-        "model": model,
-        "messages": [
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": prompt
-                    },
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": base64_image
-                        }
+        "contents": [{
+            "parts": [
+                {
+                    "text": prompt
+                },
+                {
+                    "inline_data": {
+                        "mime_type": mime_type,
+                        "data": image_base64
                     }
-                ]
-            }
-        ]
+                }
+            ]
+        }]
     }
     
     try:
+        # API呼び出し
         response = requests.post(url, headers=headers, json=payload)
         response.raise_for_status()
         
         # レスポンスをパース
         result = response.json()
         
-        # レスポンス全体を表示（デバッグ用）
-        # print(f"📊 レスポンス構造: {json.dumps(result, indent=2, ensure_ascii=False)}")
+        # テキスト回答を抽出
+        if "candidates" in result and len(result["candidates"]) > 0:
+            candidate = result["candidates"][0]
+            if "content" in candidate and "parts" in candidate["content"]:
+                for part in candidate["content"]["parts"]:
+                    if "text" in part:
+                        text_response = part["text"]
+                        print(f"\n📝 回答:\n{text_response}")
+                        return text_response
         
-        if "choices" in result and len(result["choices"]) > 0:
-            content = result["choices"][0]["message"]["content"]
-            print(f"\n📝 回答:\n{content}")
-            return content
-        else:
-            print(f"❌ 応答の生成に失敗しました: {result}")
-            return ""
-            
+        print(f"❌ テキスト回答が見つかりません: {result}")
+        return ""
+        
     except Exception as e:
         print(f"❌ エラーが発生しました: {str(e)}")
+        # デバッグ情報
         if hasattr(e, 'response') and hasattr(e.response, 'text'):
             print(f"レスポンス: {e.response.text}")
         return ""
 
-def chat_with_gemini(
-    prompt: str,
-    model: str = "gemini/gemini-2.0-flash"
+
+def transcribe_audio(
+    audio_path: str,
+    language: str = "ja",
+    model: str = "gemini-2.0-flash"
 ) -> str:
     """
-    テキストのみで Gemini とチャットする
+    音声ファイルをテキストに変換する（音声認識）
+    Gemini APIを直接呼び出す
     
     Args:
-        prompt: テキストプロンプト
+        audio_path: 音声ファイルのパス
+        language: 言語コード（ja, en, zh など）
         model: 使用するモデル名
         
     Returns:
-        Gemini からの応答テキスト
+        音声から認識されたテキスト
     """
-    print(f"📝 プロンプト: {prompt}")
+    print(f"🎤 音声ファイル: {audio_path}")
+    print(f"🌐 言語: {language}")
     print(f"🤖 モデル: {model}")
-    print("🔄 応答を生成中...")
+    print("🔄 音声を認識中...")
     
-    # Gemini のテキストチャットリクエストを構築
-    url = f"{LITELLM_PROXY_URL}/chat/completions"
+    # Geminiモデル名を正規化
+    model_name = model.replace("Google/", "")
     
+    # 音声ファイルを読み込みBase64エンコード
+    with open(audio_path, "rb") as audio_file:
+        audio_data = audio_file.read()
+        audio_base64 = base64.b64encode(audio_data).decode('utf-8')
+    
+    # 音声のMIMEタイプを取得
+    ext = os.path.splitext(audio_path)[1].lower()
+    mime_map = {
+        '.mp3': 'audio/mpeg',
+        '.wav': 'audio/wav',
+        '.m4a': 'audio/m4a',
+        '.ogg': 'audio/ogg',
+        '.flac': 'audio/flac',
+    }
+    mime_type = mime_map.get(ext, 'audio/mpeg')
+    
+    # APIエンドポイント（APIキーをクエリパラメータとして追加）
+    url = f"{GEMINI_API_BASE}/{model_name}:generateContent?key={GEMINI_API_KEY}"
+    
+    # ヘッダー
     headers = {
-        "Content-Type": "application/json",
+        "Content-Type": "application/json"
     }
     
+    # マルチモーダルリクエスト本文（音声）
     payload = {
-        "model": model,
-        "messages": [
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ]
+        "contents": [{
+            "parts": [
+                {
+                    "text": f"この音声を文字起こししてください。言語は{language}です。"
+                },
+                {
+                    "inline_data": {
+                        "mime_type": mime_type,
+                        "data": audio_base64
+                    }
+                }
+            ]
+        }]
     }
     
     try:
+        # API呼び出し
         response = requests.post(url, headers=headers, json=payload)
         response.raise_for_status()
         
         # レスポンスをパース
         result = response.json()
         
-        if "choices" in result and len(result["choices"]) > 0:
-            content = result["choices"][0]["message"]["content"]
-            print(f"\n📝 回答:\n{content}")
-            return content
-        else:
-            print(f"❌ 応答の生成に失敗しました: {result}")
-            return ""
-            
+        # テキスト回答を抽出
+        if "candidates" in result and len(result["candidates"]) > 0:
+            candidate = result["candidates"][0]
+            if "content" in candidate and "parts" in candidate["content"]:
+                for part in candidate["content"]["parts"]:
+                    if "text" in part:
+                        text_response = part["text"]
+                        print(f"\n📝 認識結果:\n{text_response}")
+                        return text_response
+        
+        print(f"❌ テキスト回答が見つかりません: {result}")
+        return ""
+        
     except Exception as e:
         print(f"❌ エラーが発生しました: {str(e)}")
+        # デバッグ情報
+        if hasattr(e, 'response') and hasattr(e.response, 'text'):
+            print(f"レスポンス: {e.response.text}")
+        return ""
+
+def text_to_speech(
+    text: str,
+    output_path: str = None,
+    voice: str = "alloy",
+    model: str = "gemini-2.0-flash"
+) -> str:
+    """
+    テキストを音声に変換する（音声合成）
+    Google Cloud Text-to-Speech APIを使用
+    
+    Args:
+        text: 音声に変換するテキスト
+        output_path: 生成した音声を保存するパス
+        voice: 音声のタイプ
+        model: 使用するモデル名（現在は使用されない）
+        
+    Returns:
+        生成された音声ファイルのパス
+    """
+    print(f"📝 テキスト: {text}")
+    print(f"🔊 音声タイプ: {voice}")
+    print(f"🤖 モデル: {model}")
+    print("🔄 音声を生成中...")
+    
+    # 出力パスが指定されていない場合は自動生成
+    if output_path is None:
+        timestamp = int(time.time())
+        os.makedirs("generated_audio", exist_ok=True)
+        output_path = f"generated_audio/speech_{voice}_{timestamp}.mp3"
+    
+    # ここでGemini APIの代わりにGoogle Text-to-Speech APIを使用します
+    # この実装ではOpenAI TTS APIを利用（簡単に利用できるため）
+    try:
+        # OpenAI TTS APIキー
+        OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+        
+        if not OPENAI_API_KEY:
+            print("❌ OpenAI APIキーが設定されていません")
+            print("環境変数 OPENAI_API_KEY を設定してください")
+            return ""
+        
+        url = "https://api.openai.com/v1/audio/speech"
+        
+        headers = {
+            "Authorization": f"Bearer {OPENAI_API_KEY}",
+            "Content-Type": "application/json",
+        }
+        
+        payload = {
+            "model": "tts-1",
+            "input": text,
+            "voice": voice
+        }
+        
+        response = requests.post(url, headers=headers, json=payload)
+        response.raise_for_status()
+        
+        # バイナリデータを取得して保存
+        with open(output_path, "wb") as f:
+            f.write(response.content)
+            
+        print(f"✅ 音声を {output_path} に保存しました (OpenAI TTS使用)")
+        return output_path
+        
+    except Exception as e:
+        print(f"❌ エラーが発生しました: {str(e)}")
+        # デバッグ情報
         if hasattr(e, 'response') and hasattr(e.response, 'text'):
             print(f"レスポンス: {e.response.text}")
         return ""
 
 def main():
-    parser = argparse.ArgumentParser(description="Gemini マルチモーダルクライアント")
-    subparsers = parser.add_subparsers(dest="command", help="実行するコマンド")
+    """メイン関数: コマンドライン引数を解析して機能を実行する"""
+    parser = argparse.ArgumentParser(description="Geminiクライアント: 画像生成、チャット、音声認識などの機能を提供")
+    subparsers = parser.add_subparsers(dest="command", help="サブコマンド")
+
+    # テキストチャットコマンド
+    chat_parser = subparsers.add_parser("chat", help="テキストチャット")
+    chat_parser.add_argument("prompt", help="チャットプロンプト")
+    chat_parser.add_argument("-m", "--model", help="使用するモデル", default="gemini-2.0-flash")
     
     # 画像生成コマンド
     image_parser = subparsers.add_parser("image", help="画像を生成")
     image_parser.add_argument("prompt", help="画像生成のプロンプト")
     image_parser.add_argument("-o", "--output", help="出力ファイルパス", default="generated_images/generated_image.png")
-    image_parser.add_argument("-m", "--model", help="使用するモデル", default="Google/gemini-2.0-flash")
+    image_parser.add_argument("-m", "--model", help="使用するモデル", default="gemini-2.0-flash-exp-image-generation")
     
     # 画像認識コマンド
     vision_parser = subparsers.add_parser("vision", help="画像とテキストを使用して回答を生成")
-    vision_parser.add_argument("prompt", help="テキストプロンプト")
-    vision_parser.add_argument("image", help="画像ファイルのパス")
-    vision_parser.add_argument("-m", "--model", help="使用するモデル", default="Google/gemini-2.0-flash")
+    vision_parser.add_argument("prompt", help="画像に関する質問や指示", default="これはなんの画像ですか")
+    vision_parser.add_argument("image", help="分析する画像のパス")
+    vision_parser.add_argument("-m", "--model", help="使用するモデル", default="gemini-2.0-flash")
     
-    # テキストチャットコマンド
-    chat_parser = subparsers.add_parser("chat", help="テキストのみでチャット")
-    chat_parser.add_argument("prompt", help="テキストプロンプト")
-    chat_parser.add_argument("-m", "--model", help="使用するモデル", default="Google/gemini-2.0-flash")
+    # 音声認識コマンド
+    speech_parser = subparsers.add_parser("speech", help="音声認識")
+    speech_parser.add_argument("audio", help="音声ファイルのパス")
+    speech_parser.add_argument("-l", "--language", help="言語コード", default="ja")
+    speech_parser.add_argument("-m", "--model", help="使用するモデル", default="gemini-2.0-flash")
     
-    # コマンドライン引数をパース
+    # テキスト音声変換コマンド
+    tts_parser = subparsers.add_parser("tts", help="テキストを音声に変換")
+    tts_parser.add_argument("text", help="音声に変換するテキスト", nargs='+')  # 複数の単語を1つの引数として扱う
+    tts_parser.add_argument("-o", "--output", help="出力ファイルパス", default=None)
+    tts_parser.add_argument("-v", "--voice", help="音声タイプ", 
+                        choices=["alloy", "echo", "fable", "onyx", "nova", "shimmer"], default="alloy")
+    tts_parser.add_argument("-m", "--model", help="使用するモデル", default="gemini-2.0-flash")
+    
     args = parser.parse_args()
     
+    # サブコマンドに基づいて機能を実行
     if args.command == "image":
         generate_image(args.prompt, args.output, args.model)
     elif args.command == "vision":
-        generate_response_with_image(args.prompt, args.image, args.model)
+        analyze_image(args.prompt, args.image, args.model)
     elif args.command == "chat":
-        chat_with_gemini(args.prompt, args.model)
+        chat_with_model(args.prompt, args.model)
+    elif args.command == "speech":
+        transcribe_audio(args.audio, args.language, args.model)
+    elif args.command == "tts":
+        # 複数の単語をスペースで結合して1つのテキストにする
+        text = ' '.join(args.text)
+        text_to_speech(text, args.output, args.voice, args.model)
     else:
         parser.print_help()
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
