@@ -248,8 +248,8 @@ def get_base64_encoded_image(image_path: str) -> str:
         return base64.b64encode(img_data).decode('utf-8')
 
 def analyze_image(
-    prompt: str,
     image_path: str,
+    prompt: str = "これはなんの画像ですか",
     model: str = "gemini-2.0-flash"
 ) -> str:
     """
@@ -257,8 +257,8 @@ def analyze_image(
     Gemini APIを直接呼び出す
     
     Args:
-        prompt: 画像に関する質問や指示
         image_path: 分析する画像のパス
+        prompt: 画像に関する質問や指示
         model: 使用するモデル名
         
     Returns:
@@ -524,8 +524,8 @@ def main():
     
     # 画像認識コマンド
     vision_parser = subparsers.add_parser("vision", help="画像とテキストを使用して回答を生成")
-    vision_parser.add_argument("prompt", help="画像に関する質問や指示", default="これはなんの画像ですか")
     vision_parser.add_argument("image", help="分析する画像のパス")
+    vision_parser.add_argument("-p", "--prompt", help="画像に関する質問や指示", default="これはなんの画像ですか")
     vision_parser.add_argument("-m", "--model", help="使用するモデル", default="gemini-2.0-flash")
     
     # 音声認識コマンド
@@ -548,7 +548,7 @@ def main():
     if args.command == "image":
         generate_image(args.prompt, args.output, args.model)
     elif args.command == "vision":
-        analyze_image(args.prompt, args.image, args.model)
+        analyze_image(args.image, args.prompt, args.model)
     elif args.command == "chat":
         chat_with_model(args.prompt, args.model)
     elif args.command == "speech":
