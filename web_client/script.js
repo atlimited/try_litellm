@@ -902,6 +902,58 @@ async function getBase64FromFile(file) {
     });
 }
 
+// Vision機能: 画像ファイル入力の設定
+function setupVisionImageInput() {
+    const imageFileInput = document.getElementById('vision-image');
+    const imageUrlInput = document.getElementById('vision-image-url');
+    const imagePreview = document.getElementById('vision-image-preview');
+    
+    // ファイル選択時のプレビュー表示
+    imageFileInput.addEventListener('change', (event) => {
+        if (event.target.files && event.target.files[0]) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                // 画像プレビューを表示
+                imagePreview.innerHTML = '';
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.alt = 'Selected image';
+                imagePreview.appendChild(img);
+                
+                // URL入力欄をクリア（ファイルが優先）
+                imageUrlInput.value = '';
+            };
+            
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    // URL入力時のプレビュー表示
+    imageUrlInput.addEventListener('input', debounce(async (event) => {
+        const url = event.target.value.trim();
+        if (url) {
+            try {
+                // 画像プレビューを表示
+                imagePreview.innerHTML = '';
+                const img = document.createElement('img');
+                img.src = url;
+                img.alt = 'Image from URL';
+                img.onerror = () => {
+                    imagePreview.innerHTML = '<p style="color: red;">画像を読み込めませんでした。有効なURLを入力してください。</p>';
+                };
+                imagePreview.appendChild(img);
+                
+                // ファイル入力をクリア
+                imageFileInput.value = '';
+            } catch (error) {
+                imagePreview.innerHTML = '<p style="color: red;">画像の読み込み中にエラーが発生しました。</p>';
+            }
+        }
+    }, 500));
+}
+
 // 入力のdebounce処理
 function debounce(func, delay) {
     let debounceTimer;
