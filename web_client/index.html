@@ -32,7 +32,11 @@
                         <option value="OpenAI/gpt-4.1-nano">OpenAI GPT-4.1 Nano</option>
                         <option value="SambaNova/Meta-Llama-3.2-3B-Instruct">SambaNova Meta Llama 3.2 3B Instruct</option>
                         <option value="SambaNova/Meta-Llama-3.3-70B-Instruct">SambaNova Meta Llama 3.3 70B Instruct</option>
+                        <option value="SambaNova/Llama-3.3-Swallow-70B-Instruct-v0.4">SambaNova Llama 3.3 Swallow 70B Instruct v0.4</option>
                         <option value="SambaNova/DeepSeek-R1">SambaNova DeepSeek R1</option>
+                        <option value="SambaNova/DeepSeek-R1-Distill-Llama-70B">SambaNova DeepSeek R1 Distill Llama 70B</option>
+                        <option value="SambaNova/DeepSeek-V3-0324">SambaNova DeepSeek V3 0324</option>
+                        <option value="SambaNova/QwQ-32B">SambaNova QwQ 32B</option>
                         <option value="SambaNova/Llama-4-Scout-17B-16E-Instruct">SambaNova Llama 4 Scout 17B</option>
                         <option value="SambaNova/Llama-4-Maverick-17B-128E-Instruct">SambaNova Llama 4 Maverick 17B</option>
                         <option value="Google/gemini-2.0-flash">Google Gemini 2.0 Flash</option>
@@ -64,6 +68,7 @@
                     <label for="image-model">モデル選択:</label>
                     <select id="image-model">
                         <option value="OpenAI/dall-e-3">OpenAI DALL-E 3</option>
+                        <option value="Google/gemini-2.0-flash">Google Gemini 2.0 Flash</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -107,6 +112,7 @@
                     <select id="tts-model">
                         <option value="OpenAI/tts-1">OpenAI TTS-1</option>
                         <option value="OpenAI/tts-1-hd">OpenAI TTS-1-HD</option>
+                        <option value="Google/gemini-2.0-flash">Google Gemini 2.0 Flash</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -240,6 +246,17 @@
             <h2>保存された結果</h2>
             <div id="saved-results-container" class="saved-results-container">
                 <div class="no-saved-results">保存された結果はありません</div>
+            </div>
+        </div>
+        
+        <!-- HTTPリクエストログ -->
+        <div class="request-log-container">
+            <div class="request-log-header">
+                <h2>HTTPリクエストログ</h2>
+                <button id="clear-request-log" class="action-button">ログをクリア</button>
+            </div>
+            <div id="request-log" class="request-log">
+                <div class="no-requests">リクエストログはありません</div>
             </div>
         </div>
     </div>
