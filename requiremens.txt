@@ -1,1 +1,2 @@
 litellm==1.67.2
+pillow==11.2.1
