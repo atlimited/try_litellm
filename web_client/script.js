@@ -44,6 +44,7 @@ async function generateText() {
     const model = document.getElementById('text-model').value;
     const prompt = document.getElementById('text-prompt').value;
     const resultElement = document.getElementById('text-result');
+    const responseTimeElement = document.querySelector('.text-response-time');
     
     if (!prompt.trim()) {
         resultElement.textContent = 'プロンプトを入力してください。';
@@ -56,6 +57,10 @@ async function generateText() {
     button.textContent = '生成中...';
     
     resultElement.textContent = '生成中...';
+    responseTimeElement.textContent = '-';
+    
+    // 処理開始時間を記録
+    const startTime = performance.now();
     
     try {
         const response = await fetch(`${LITELLM_PROXY_URL}/chat/completions`, {
@@ -85,9 +90,15 @@ async function generateText() {
         
         const data = await response.json();
         resultElement.innerHTML = data.choices[0].message.content.replace(/\n/g, '<br>');
+        
+        // 処理終了時間を記録し、処理時間を計算して表示
+        const endTime = performance.now();
+        const processingTime = Math.round(endTime - startTime);
+        responseTimeElement.textContent = processingTime;
     } catch (error) {
         resultElement.textContent = `エラーが発生しました: ${error.message}`;
         console.error('テキスト生成中にエラーが発生しました:', error);
+        responseTimeElement.textContent = '-';
     } finally {
         // ボタンを再有効化
         button.disabled = false;
@@ -103,6 +114,7 @@ async function generateImage() {
     const quality = document.getElementById('image-quality').value;
     const resultElement = document.getElementById('image-result');
     const loadingIndicator = document.getElementById('image-loading');
+    const responseTimeElement = document.querySelector('.image-response-time');
     
     if (!prompt.trim()) {
         resultElement.textContent = 'プロンプトを入力してください。';
@@ -115,6 +127,10 @@ async function generateImage() {
     button.textContent = '生成中...';
     loadingIndicator.classList.remove('hidden');
     resultElement.innerHTML = '';
+    responseTimeElement.textContent = '-';
+    
+    // 処理開始時間を記録
+    const startTime = performance.now();
     
     try {
         const response = await fetch(`${LITELLM_PROXY_URL}/images/generations`, {
@@ -155,9 +171,14 @@ async function generateImage() {
         urlText.style.wordBreak = 'break-all';
         resultElement.appendChild(urlText);
         
+        // 処理終了時間を記録し、処理時間を計算して表示
+        const endTime = performance.now();
+        const processingTime = Math.round(endTime - startTime);
+        responseTimeElement.textContent = processingTime;
     } catch (error) {
         resultElement.textContent = `エラーが発生しました: ${error.message}`;
         console.error('画像生成中にエラーが発生しました:', error);
+        responseTimeElement.textContent = '-';
     } finally {
         // ボタンとローディングインジケーターを更新
         button.disabled = false;
@@ -173,6 +194,7 @@ async function generateTTS() {
     const text = document.getElementById('tts-text').value;
     const resultElement = document.getElementById('tts-result');
     const loadingIndicator = document.getElementById('tts-loading');
+    const responseTimeElement = document.querySelector('.tts-response-time');
     
     if (!text.trim()) {
         resultElement.textContent = 'テキストを入力してください。';
@@ -185,6 +207,10 @@ async function generateTTS() {
     button.textContent = '生成中...';
     loadingIndicator.classList.remove('hidden');
     resultElement.innerHTML = '';
+    responseTimeElement.textContent = '-';
+    
+    // 処理開始時間を記録
+    const startTime = performance.now();
     
     try {
         const response = await fetch(`${LITELLM_PROXY_URL}/audio/speech`, {
@@ -194,8 +220,9 @@ async function generateTTS() {
             },
             body: JSON.stringify({
                 model: model,
+                input: text,
                 voice: voice,
-                input: text
+                response_format: 'mp3'
             })
         });
         
@@ -203,32 +230,32 @@ async function generateTTS() {
             throw new Error(`API エラー: ${response.status}`);
         }
         
-        // 音声データをBlobとして取得
         const audioBlob = await response.blob();
         const audioUrl = URL.createObjectURL(audioBlob);
         
         // 音声プレーヤーを作成
-        const audio = document.createElement('audio');
-        audio.controls = true;
-        audio.src = audioUrl;
+        const audioPlayer = document.createElement('audio');
+        audioPlayer.controls = true;
+        audioPlayer.src = audioUrl;
+        audioPlayer.style.width = '100%';
+        resultElement.appendChild(audioPlayer);
         
-        resultElement.innerHTML = '';
-        resultElement.appendChild(audio);
-        
-        // ダウンロードリンクを追加
-        const timestamp = new Date().getTime();
+        // ダウンロードリンクを作成
         const downloadLink = document.createElement('a');
         downloadLink.href = audioUrl;
-        downloadLink.download = `speech_${voice}_${timestamp}.mp3`;
-        downloadLink.textContent = '音声ファイルをダウンロード';
-        downloadLink.style.display = 'block';
-        downloadLink.style.marginTop = '10px';
-        downloadLink.style.textAlign = 'center';
+        downloadLink.download = 'generated_audio.mp3';
+        downloadLink.textContent = 'ダウンロード';
+        downloadLink.className = 'download-link';
         resultElement.appendChild(downloadLink);
         
+        // 処理終了時間を記録し、処理時間を計算して表示
+        const endTime = performance.now();
+        const processingTime = Math.round(endTime - startTime);
+        responseTimeElement.textContent = processingTime;
     } catch (error) {
         resultElement.textContent = `エラーが発生しました: ${error.message}`;
         console.error('音声生成中にエラーが発生しました:', error);
+        responseTimeElement.textContent = '-';
     } finally {
         // ボタンとローディングインジケーターを更新
         button.disabled = false;
@@ -318,6 +345,7 @@ async function analyzeImage() {
     const imageUrl = document.getElementById('vision-image-url').value.trim();
     const resultElement = document.getElementById('vision-result');
     const loadingIndicator = document.getElementById('vision-loading');
+    const responseTimeElement = document.querySelector('.vision-response-time');
     
     if (!prompt.trim()) {
         resultElement.textContent = 'プロンプトを入力してください。';
@@ -335,6 +363,10 @@ async function analyzeImage() {
     button.textContent = '分析中...';
     loadingIndicator.classList.remove('hidden');
     resultElement.innerHTML = '';
+    responseTimeElement.textContent = '-';
+    
+    // 処理開始時間を記録
+    const startTime = performance.now();
     
     try {
         // 画像データの準備
@@ -381,9 +413,15 @@ async function analyzeImage() {
         
         const data = await response.json();
         resultElement.innerHTML = data.choices[0].message.content.replace(/\n/g, '<br>');
+        
+        // 処理終了時間を記録し、処理時間を計算して表示
+        const endTime = performance.now();
+        const processingTime = Math.round(endTime - startTime);
+        responseTimeElement.textContent = processingTime;
     } catch (error) {
         resultElement.textContent = `エラーが発生しました: ${error.message}`;
         console.error('画像分析中にエラーが発生しました:', error);
+        responseTimeElement.textContent = '-';
     } finally {
         // ボタンとローディングインジケーターを更新
         button.disabled = false;
@@ -480,16 +518,20 @@ function setupAudioRecording() {
 // 音声文字起こし機能
 async function transcribeAudio() {
     const model = document.getElementById('speech-model').value;
+    const language = document.getElementById('speech-language').value;
     const audioFile = document.getElementById('speech-audio').files[0];
     const resultElement = document.getElementById('speech-result');
     const loadingIndicator = document.getElementById('speech-loading');
+    const responseTimeElement = document.querySelector('.speech-response-time');
     
     // 録音されたオーディオまたはアップロードされたファイルを使用
     let audioData;
-    if (audioFile) {
+    if (audioBlob) {
+        // 録音されたオーディオを使用
+        audioData = new File([audioBlob], 'recorded_audio.webm', { type: audioBlob.type });
+    } else if (audioFile) {
+        // アップロードされたファイルを使用
         audioData = audioFile;
-    } else if (audioBlob) {
-        audioData = audioBlob;
     } else {
         resultElement.textContent = '音声ファイルをアップロードするか、録音してください。';
         return;
@@ -501,28 +543,121 @@ async function transcribeAudio() {
     button.textContent = '文字起こし中...';
     loadingIndicator.classList.remove('hidden');
     resultElement.innerHTML = '';
+    responseTimeElement.textContent = '-';
+    
+    // 処理開始時間を記録
+    const startTime = performance.now();
     
     try {
-        // FormDataの作成
-        const formData = new FormData();
-        formData.append('file', audioData);
-        formData.append('model', model);
+        let response;
         
-        // APIリクエスト
-        const response = await fetch(`${LITELLM_PROXY_URL}/audio/transcriptions`, {
-            method: 'POST',
-            body: formData
-        });
-        
-        if (!response.ok) {
-            throw new Error(`API エラー: ${response.status}`);
+        // Sambanovaモデルかどうかを確認
+        if (model.includes('sambanova') || model.includes('qwen2-audio')) {
+            // Sambanovaモデルの場合、チャット完了エンドポイントを使用
+            // Base64エンコードされた音声ファイルが必要
+            const reader = new FileReader();
+            const audioBase64Promise = new Promise((resolve, reject) => {
+                reader.onload = () => {
+                    // ArrayBufferをBase64に変換
+                    const base64 = btoa(
+                        new Uint8Array(reader.result)
+                            .reduce((data, byte) => data + String.fromCharCode(byte), '')
+                    );
+                    resolve(base64);
+                };
+                reader.onerror = reject;
+                reader.readAsArrayBuffer(audioData);
+            });
+            
+            const audioBase64 = await audioBase64Promise;
+            
+            // 言語に基づいたプロンプトの作成
+            let promptText = "この録音には何が含まれていますか？";
+            if (language !== 'auto') {
+                // 言語のマッピング
+                const languageNames = {
+                    'ja': '日本語',
+                    'en': '英語',
+                    'zh': '中国語',
+                    'ko': '韓国語',
+                    'fr': 'フランス語',
+                    'de': 'ドイツ語',
+                    'es': 'スペイン語',
+                    'ru': 'ロシア語'
+                };
+                const languageName = languageNames[language] || language;
+                promptText = `これは${languageName}の音声です。この録音の内容を文字起こししてください。`;
+            }
+            
+            response = await fetch(`${LITELLM_PROXY_URL}/chat/completions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: model,
+                    messages: [
+                        {
+                            role: 'user',
+                            content: [
+                                {
+                                    type: 'text',
+                                    text: promptText
+                                },
+                                {
+                                    type: 'input_audio',
+                                    input_audio: {
+                                        data: audioBase64,
+                                        format: audioData.type.split('/')[1] || 'wav'
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    language: language !== 'auto' ? language : undefined
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`API エラー: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            resultElement.innerHTML = data.choices[0].message.content.replace(/\n/g, '<br>');
+        } else {
+            // Whisperモデルなど標準の文字起こしエンドポイントを使用するモデルの場合
+            // FormDataの作成
+            const formData = new FormData();
+            formData.append('file', audioData);
+            formData.append('model', model);
+            
+            // 言語が「auto」でない場合のみ言語パラメータを追加
+            if (language !== 'auto') {
+                formData.append('language', language);
+            }
+            
+            // APIリクエスト
+            response = await fetch(`${LITELLM_PROXY_URL}/audio/transcriptions`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error(`API エラー: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            resultElement.textContent = data.text;
         }
         
-        const data = await response.json();
-        resultElement.textContent = data.text;
+        // 処理終了時間を記録し、処理時間を計算して表示
+        const endTime = performance.now();
+        const processingTime = Math.round(endTime - startTime);
+        responseTimeElement.textContent = processingTime;
     } catch (error) {
         resultElement.textContent = `エラーが発生しました: ${error.message}`;
         console.error('音声文字起こし中にエラーが発生しました:', error);
+        responseTimeElement.textContent = '-';
     } finally {
         // ボタンとローディングインジケーターを更新
         button.disabled = false;

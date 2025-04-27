@@ -28,11 +28,16 @@
                 <div class="form-group">
                     <label for="text-model">モデル選択:</label>
                     <select id="text-model">
-                        <option value="gpt-4o-mini">GPT-4o Mini</option>
-                        <option value="Meta-Llama-3.2-3B-Instruct">Meta Llama 3.2 3B Instruct</option>
-                        <option value="Meta-Llama-3.3-70B-Instruct">Meta Llama 3.3 70B Instruct</option>
-                        <option value="Llama-4-Maverick-17B-128E-Instruct">Llama 4 Maverick 17B</option>
-                        <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                        <option value="OpenAI/gpt-4o-mini">OpenAI GPT-4o Mini</option>
+                        <option value="OpenAI/gpt-4.1-nano">OpenAI GPT-4.1 Nano</option>
+                        <option value="SambaNova/Meta-Llama-3.2-3B-Instruct">SambaNova Meta Llama 3.2 3B Instruct</option>
+                        <option value="SambaNova/Meta-Llama-3.3-70B-Instruct">SambaNova Meta Llama 3.3 70B Instruct</option>
+                        <option value="SambaNova/DeepSeek-R1">SambaNova DeepSeek R1</option>
+                        <option value="SambaNova/Llama-4-Scout-17B-16E-Instruct">SambaNova Llama 4 Scout 17B</option>
+                        <option value="SambaNova/Llama-4-Maverick-17B-128E-Instruct">SambaNova Llama 4 Maverick 17B</option>
+                        <option value="Google/gemini-2.0-flash">Google Gemini 2.0 Flash</option>
+                        <option value="Ollama/qwen2.5:32b">Ollama Qwen 2.5 32B[local]</option>
+                        <option value="Ollama/llama3.2:latest">Ollama Llama 3.2 3B[local]</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -40,6 +45,9 @@
                     <textarea id="text-prompt" rows="4" placeholder="質問や指示を入力してください...">こんにちは！今日の天気について教えてください。</textarea>
                 </div>
                 <button id="generate-text" class="action-button">テキスト生成</button>
+                <div class="form-group response-time-container">
+                    <p>処理時間: <span class="text-response-time">-</span> ms</p>
+                </div>
                 <div class="result-container">
                     <h3>結果:</h3>
                     <div id="text-result" class="result-box"></div>
@@ -52,7 +60,7 @@
                 <div class="form-group">
                     <label for="image-model">モデル選択:</label>
                     <select id="image-model">
-                        <option value="dall-e-3">DALL-E 3</option>
+                        <option value="OpenAI/dall-e-3">OpenAI DALL-E 3</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -75,6 +83,9 @@
                     <textarea id="image-prompt" rows="4" placeholder="生成したい画像の説明を入力してください...">A futuristic Japanese garden with cherry blossoms, traditional elements, and modern technology integrated seamlessly.</textarea>
                 </div>
                 <button id="generate-image" class="action-button">画像生成</button>
+                <div class="form-group response-time-container">
+                    <p>処理時間: <span class="image-response-time">-</span> ms</p>
+                </div>
                 <div class="result-container">
                     <h3>結果:</h3>
                     <div id="image-loading" class="loading-indicator hidden">生成中...</div>
@@ -88,8 +99,8 @@
                 <div class="form-group">
                     <label for="tts-model">モデル選択:</label>
                     <select id="tts-model">
-                        <option value="tts-1">TTS-1</option>
-                        <option value="tts-1-hd">TTS-1-HD</option>
+                        <option value="OpenAI/tts-1">OpenAI TTS-1</option>
+                        <option value="OpenAI/tts-1-hd">OpenAI TTS-1-HD</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -108,6 +119,9 @@
                     <textarea id="tts-text" rows="4" placeholder="読み上げたいテキストを入力してください...">こんにちは。これはLiteLLMプロキシを通じて生成された音声サンプルです。Text-to-Speech APIを使用して、テキストから音声への変換を行っています。</textarea>
                 </div>
                 <button id="generate-tts" class="action-button">音声生成</button>
+                <div class="form-group response-time-container">
+                    <p>処理時間: <span class="tts-response-time">-</span> ms</p>
+                </div>
                 <div class="result-container">
                     <h3>結果:</h3>
                     <div id="tts-loading" class="loading-indicator hidden">生成中...</div>
@@ -121,8 +135,9 @@
                 <div class="form-group">
                     <label for="vision-model">モデル選択:</label>
                     <select id="vision-model">
-                        <option value="Llama-4-Maverick-17B-128E-Instruct">Llama 4 Maverick 17B</option>
-                        <option value="gpt-4o-mini">GPT-4o Mini</option>
+                        <option value="SambaNova/Llama-4-Maverick-17B-128E-Instruct">SambaNova Llama 4 Maverick 17B</option>
+                        <option value="OpenAI/gpt-4o-mini">OpenAI GPT-4o Mini</option>
+                        <option value="Google/gemini-2.0-flash">Google Gemini 2.0 Flash</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -139,6 +154,9 @@
                     <textarea id="vision-prompt" rows="4" placeholder="画像について質問や指示を入力してください...">この画像に何が写っていますか？詳しく説明してください。</textarea>
                 </div>
                 <button id="analyze-image" class="action-button">画像分析</button>
+                <div class="form-group response-time-container">
+                    <p>処理時間: <span class="vision-response-time">-</span> ms</p>
+                </div>
                 <div class="result-container">
                     <h3>結果:</h3>
                     <div id="vision-loading" class="loading-indicator hidden">分析中...</div>
@@ -152,8 +170,23 @@
                 <div class="form-group">
                     <label for="speech-model">モデル選択:</label>
                     <select id="speech-model">
-                        <option value="whisper-1">Whisper-1</option>
-                        <option value="Whisper-Large-v3">Whisper-Large-v3</option>
+                        <option value="OpenAI/whisper-1">OpenAI Whisper-1</option>
+                        <option value="SambaNova/Whisper-Large-v3">SambaNova Whisper-Large-v3</option>
+                        <option value="SambaNova/Qwen2-Audio-7B-Instruct">SambaNova Qwen2 Audio 7B Instruct</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="speech-language">言語選択:</label>
+                    <select id="speech-language">
+                        <option value="ja" selected>日本語</option>
+                        <option value="en">英語</option>
+                        <option value="zh">中国語</option>
+                        <option value="ko">韓国語</option>
+                        <option value="fr">フランス語</option>
+                        <option value="de">ドイツ語</option>
+                        <option value="es">スペイン語</option>
+                        <option value="ru">ロシア語</option>
+                        <option value="auto">自動検出</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -172,6 +205,9 @@
                     </div>
                 </div>
                 <button id="transcribe-audio" class="action-button">音声文字起こし</button>
+                <div class="form-group response-time-container">
+                    <p>処理時間: <span class="speech-response-time">-</span> ms</p>
+                </div>
                 <div class="result-container">
                     <h3>結果:</h3>
                     <div id="speech-loading" class="loading-indicator hidden">文字起こし中...</div>
