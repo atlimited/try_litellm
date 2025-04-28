@@ -90,4 +90,7 @@ function resetResults(tabId) {
         document.getElementById(`${tabId}-result`).innerHTML = '';
         document.querySelector(`.${tabId}-response-time`).textContent = '-';
     }
+    
+    // 保存結果一覧を更新
+    updateSavedResultsView();
 }
