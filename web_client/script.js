@@ -821,8 +821,24 @@ async function analyzeImage() {
             // ファイルからBase64エンコード
             imageContent = await getBase64FromFile(imageFile);
         } else {
-            // URLから直接使用
-            imageContent = imageUrl;
+            // URLから画像を取得してBase64エンコード
+            try {
+                const response = await fetch(imageUrl);
+                if (!response.ok) {
+                    throw new Error(`画像の取得に失敗しました: ${response.status}`);
+                }
+                
+                const blob = await response.blob();
+                const reader = new FileReader();
+                imageContent = await new Promise((resolve, reject) => {
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+            } catch (error) {
+                resultElement.textContent = `画像の取得に失敗しました: ${error.message}`;
+                throw error;
+            }
         }
         
         // APIリクエスト
@@ -978,6 +994,7 @@ async function transcribeAudio() {
     const model = document.getElementById('speech-model').value;
     const language = document.getElementById('speech-language').value;
     const audioFile = document.getElementById('speech-audio').files[0];
+    const audioPath = document.getElementById('speech-audio-path').value;
     const resultElement = document.getElementById('speech-result');
     const loadingIndicator = document.getElementById('speech-loading');
     const responseTimeElement = document.querySelector('.speech-response-time');
@@ -990,6 +1007,23 @@ async function transcribeAudio() {
     } else if (audioFile) {
         // アップロードされたファイルを使用
         audioData = audioFile;
+    } else if (audioPath) {
+        // パスから音声ファイルを取得
+        try {
+            const response = await fetch(audioPath);
+            if (!response.ok) {
+                throw new Error(`ファイルの取得に失敗しました: ${response.status}`);
+            }
+            const blob = await response.blob();
+            // ファイル名を取得
+            const fileName = audioPath.split('/').pop();
+            // MIMEタイプを推測
+            const mimeType = getMimeTypeFromFileName(fileName) || 'audio/mp3';
+            audioData = new File([blob], fileName, { type: mimeType });
+        } catch (error) {
+            resultElement.textContent = `ファイルの読み込みに失敗しました: ${error.message}`;
+            return;
+        }
     } else {
         resultElement.textContent = '音声ファイルをアップロードするか、録音してください。';
         return;
@@ -1207,4 +1241,18 @@ function debounce(func, delay) {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => func.apply(context, args), delay);
     };
+}
+
+// ファイル名からMIMEタイプを推測する関数
+function getMimeTypeFromFileName(fileName) {
+    const extension = fileName.split('.').pop().toLowerCase();
+    const mimeTypes = {
+        'mp3': 'audio/mp3',
+        'wav': 'audio/wav',
+        'ogg': 'audio/ogg',
+        'flac': 'audio/flac',
+        'm4a': 'audio/m4a',
+        'webm': 'audio/webm'
+    };
+    return mimeTypes[extension] || null;
 }
