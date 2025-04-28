@@ -34,10 +34,9 @@ def get_base64_encoded_image(image_url):
 image_url = "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madison-the-nature-boardwalk.jpg"
 
 # モデル選択（使用したいモデルのコメントを外す）
-#model_name = "gpt-4o-mini"
-model_name = "gemini-2.0-flash"
-# model_name = "Meta-Llama-3.2-3B-Instruct"
-#model_name = "Llama-4-Maverick-17B-128E-Instruct"
+#model_name = "OpenAI/gpt-4o-mini"
+#model_name = "Google/gemini-2.0-flash"
+model_name = "SambaNova/Llama-4-Maverick-17B-128E-Instruct"
 
 # ベース64エンコードされた画像を取得
 base64_image = get_base64_encoded_image(image_url)
