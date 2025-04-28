@@ -197,7 +197,7 @@ function updateRequestLogUI() {
             try {
                 // JSONの場合はフォーマット
                 const jsonBody = JSON.parse(log.body);
-                requestBodyHtml = `<pre class="request-body-content">${JSON.stringify(jsonBody, null, 2)}</pre>`;
+                requestBodyHtml = `<pre><code class="language-json">${JSON.stringify(jsonBody, null, 2)}</code></pre>`;
             } catch (e) {
                 requestBodyHtml = `<pre class="request-body-content">${log.body}</pre>`;
             }
@@ -209,7 +209,7 @@ function updateRequestLogUI() {
             try {
                 // JSONの場合はフォーマット
                 const jsonResponse = JSON.parse(log.response);
-                responseBodyHtml = `<pre class="response-body-content">${JSON.stringify(jsonResponse, null, 2)}</pre>`;
+                responseBodyHtml = `<pre><code class="language-json">${JSON.stringify(jsonResponse, null, 2)}</code></pre>`;
             } catch (e) {
                 responseBodyHtml = `<pre class="response-body-content">${log.response}</pre>`;
             }
@@ -241,6 +241,13 @@ function updateRequestLogUI() {
         `;
         
         logContainer.appendChild(requestItem);
+    }
+    
+    // highlight.jsを初期化して適用
+    if (window.hljs) {
+        document.querySelectorAll('#request-log pre code').forEach((block) => {
+            hljs.highlightElement(block);
+        });
     }
 }
 

@@ -808,3 +808,36 @@ input[type="file"] {
     padding: 20px;
     font-style: italic;
 }
+
+/* リクエスト/レスポンス本文のスタイル */
+.request-body-content, .response-body-content {
+    margin: 0;
+    padding: 10px;
+    white-space: pre-wrap;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    background: transparent;
+}
+
+/* highlight.js用のスタイル調整 */
+.request-body-container pre, .response-body-container pre {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: none;
+}
+
+.request-body-container code, .response-body-container code {
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    white-space: pre-wrap;
+    padding: 10px;
+    display: block;
+    background: transparent;
+}
+
+/* highlight.jsスタイルのオーバーライド */
+.hljs {
+    background: transparent !important;
+    padding: 0 !important;
+}
