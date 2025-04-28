@@ -256,6 +256,21 @@
                     <label for="tools-prompt">プロンプト:</label>
                     <textarea id="tools-prompt" rows="4" placeholder="質問や指示を入力してください...">東京の今日の天気を教えてください。</textarea>
                 </div>
+                
+                <!-- 関数とツール定義の表示エリア -->
+                <div class="form-group function-tools-info">
+                    <details>
+                        <summary>関数とツール定義を表示</summary>
+                        <div class="tool-definition-container">
+                            <h3>利用可能な関数</h3>
+                            <pre id="available-functions"></pre>
+                            
+                            <h3>ツール定義</h3>
+                            <pre id="tool-definitions"></pre>
+                        </div>
+                    </details>
+                </div>
+                
                 <button id="execute-function-call" class="action-button">実行</button>
                 <div class="form-group response-time-container">
                     <p>処理時間: <span class="tools-response-time">-</span> ms</p>

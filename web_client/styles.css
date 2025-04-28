@@ -91,6 +91,60 @@ header h1 {
     to { opacity: 1; }
 }
 
+/* 関数呼び出し関連のスタイル */
+.function-tools-info {
+    margin-bottom: 15px;
+}
+
+.function-tools-info summary {
+    font-weight: bold;
+    cursor: pointer;
+    color: #2c3e50;
+    padding: 8px;
+    background-color: #f5f7fa;
+    border-radius: 4px;
+}
+
+.function-tools-info summary:hover {
+    background-color: #e9ecef;
+}
+
+.tool-definition-container {
+    margin-top: 10px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border-left: 4px solid #6c757d;
+}
+
+.tool-definition-container h3 {
+    margin-top: 0;
+    font-size: 16px;
+    color: #343a40;
+}
+
+.tool-definition-container pre {
+    background-color: #f1f3f5;
+    padding: 10px;
+    border-radius: 4px;
+    overflow: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    white-space: pre-wrap;
+    max-height: 300px;
+}
+
+.function-call-log {
+    background-color: #f8f9fa;
+    border-left: 4px solid #17a2b8;
+    margin-bottom: 10px;
+}
+
+.log-entry {
+    padding: 5px 10px;
+    border-bottom: 1px solid #e9ecef;
+}
+
 /* フォーム要素 */
 .form-group {
     margin-bottom: 15px;

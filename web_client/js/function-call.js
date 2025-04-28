@@ -2,16 +2,68 @@
 function getCurrentWeather(location, unit = "fahrenheit") {
     console.log(`天気情報取得リクエスト: 場所=${location}, 単位=${unit}`);
     
+    let temperature;
+    
     if (location.toLowerCase().includes("tokyo")) {
-        return JSON.stringify({"location": "Tokyo", "temperature": "10", "unit": "celsius"});
+        location = "Tokyo";
+        temperature = "10";
+        unit = "celsius";
     } else if (location.toLowerCase().includes("san francisco")) {
-        return JSON.stringify({"location": "San Francisco", "temperature": "72", "unit": "fahrenheit"});
+        location = "San Francisco";
+        temperature = "72";
+        unit = "fahrenheit";
     } else if (location.toLowerCase().includes("paris")) {
-        return JSON.stringify({"location": "Paris", "temperature": "22", "unit": "celsius"});
+        location = "Paris";
+        temperature = "22";
+        unit = "celsius";
     } else {
-        return JSON.stringify({"location": location, "temperature": "unknown"});
+        temperature = "undefined";
+    }
+    
+    return JSON.stringify({"location": location, "temperature": temperature, "unit": unit});
+}
+
+// ツール定義
+const tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_current_weather",
+            "description": "Get the current weather in a given location",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "location": {
+                        "type": "string",
+                        "description": "The city and state, e.g. San Francisco, CA",
+                    },
+                    "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]},
+                },
+                "required": ["location"],
+            },
+        },
+    }
+];
+
+// 関数とツール定義を表示
+function displayFunctionAndToolDefinitions() {
+    const functionContainer = document.getElementById('available-functions');
+    const toolContainer = document.getElementById('tool-definitions');
+    
+    if (functionContainer && toolContainer) {
+        // 関数の実装を表示
+        const functionImpl = getCurrentWeather.toString();
+        functionContainer.textContent = functionImpl;
+        
+        // ツール定義を表示
+        toolContainer.textContent = JSON.stringify(tools, null, 2);
     }
 }
+
+// ページ読み込み時に関数とツール定義を表示
+document.addEventListener('DOMContentLoaded', () => {
+    displayFunctionAndToolDefinitions();
+});
 
 // 関数呼び出し処理
 async function executeFunctionCall() {
@@ -33,28 +85,6 @@ async function executeFunctionCall() {
     const startTime = Date.now();
     
     try {
-        // ツール定義
-        const tools = [
-            {
-                "type": "function",
-                "function": {
-                    "name": "get_current_weather",
-                    "description": "Get the current weather in a given location",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "location": {
-                                "type": "string",
-                                "description": "The city and state, e.g. San Francisco, CA",
-                            },
-                            "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]},
-                        },
-                        "required": ["location"],
-                    },
-                },
-            }
-        ];
-        
         // メッセージの準備
         const messages = [{"role": "user", "content": prompt}];
         
