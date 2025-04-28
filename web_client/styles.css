@@ -109,6 +109,30 @@ header h1 {
     background-color: #e9ecef;
 }
 
+#available-functions,
+#tool-definitions {
+    max-height: 400px;
+    overflow: auto;
+    margin-bottom: 20px;
+}
+
+#available-functions pre,
+#tool-definitions pre {
+    margin: 0;
+    border: none;
+    background: transparent;
+    padding: 0;
+    max-height: none;
+    overflow: visible;
+}
+
+#available-functions code,
+#tool-definitions code {
+    display: block;
+    overflow: visible;
+    white-space: pre-wrap;
+}
+
 .tool-definition-container {
     margin-top: 10px;
     padding: 15px;
@@ -121,17 +145,16 @@ header h1 {
     margin-top: 0;
     font-size: 16px;
     color: #343a40;
+    margin-bottom: 15px;
 }
 
 .tool-definition-container pre {
     background-color: #f1f3f5;
     padding: 10px;
     border-radius: 4px;
-    overflow: auto;
     font-family: 'Courier New', monospace;
     font-size: 14px;
     white-space: pre-wrap;
-    max-height: 300px;
 }
 
 .function-call-log {
