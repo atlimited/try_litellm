@@ -2,3 +2,4 @@ venv/
 logs/
 generated_audio/
 generated_images/
+test.py

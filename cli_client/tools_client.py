@@ -112,6 +112,8 @@ def run_tool_call(message, model):
             second_payload = {
                 "model": model,
                 "messages": messages,
+                "tools": tools, # anthropicでは2回目も必要
+                "tool_choice": "auto", # anthropicでは2回目も必要
             }
 
             print("\n🔄 関数の結果を含めて再度リクエストを送信中...")
