@@ -192,25 +192,26 @@ function updateRequestLogUI() {
         const statusClass = (log.status >= 200 && log.status < 300) ? 'success' : 'error';
         
         // リクエスト詳細
-        let requestDetails = '';
+        let requestBodyHtml = '';
         if (log.body) {
             try {
                 // JSONの場合はフォーマット
                 const jsonBody = JSON.parse(log.body);
-                requestDetails += `リクエスト本文:\n${JSON.stringify(jsonBody, null, 2)}\n\n`;
+                requestBodyHtml = `<pre class="request-body-content">${JSON.stringify(jsonBody, null, 2)}</pre>`;
             } catch (e) {
-                requestDetails += `リクエスト本文:\n${log.body}\n\n`;
+                requestBodyHtml = `<pre class="request-body-content">${log.body}</pre>`;
             }
         }
         
         // レスポンス詳細
+        let responseBodyHtml = '';
         if (log.response) {
             try {
                 // JSONの場合はフォーマット
                 const jsonResponse = JSON.parse(log.response);
-                requestDetails += `レスポンス本文:\n${JSON.stringify(jsonResponse, null, 2)}`;
+                responseBodyHtml = `<pre class="response-body-content">${JSON.stringify(jsonResponse, null, 2)}</pre>`;
             } catch (e) {
-                requestDetails += `レスポンス本文:\n${log.response}`;
+                responseBodyHtml = `<pre class="response-body-content">${log.response}</pre>`;
             }
         }
         
@@ -223,7 +224,20 @@ function updateRequestLogUI() {
             <div class="request-status ${statusClass}">
                 ステータス: ${log.status} ${log.statusText} (${processingTime}ms)
             </div>
-            ${requestDetails ? `<div class="request-details">${requestDetails}</div>` : ''}
+            <div class="request-response-container">
+                <div class="request-body">
+                    <div class="log-section-title">リクエスト本文:</div>
+                    <div class="request-body-container">
+                        ${requestBodyHtml || '<div class="empty-body">本文なし</div>'}
+                    </div>
+                </div>
+                <div class="response-body">
+                    <div class="log-section-title">レスポンス本文:</div>
+                    <div class="response-body-container">
+                        ${responseBodyHtml || '<div class="empty-body">本文なし</div>'}
+                    </div>
+                </div>
+            </div>
         `;
         
         logContainer.appendChild(requestItem);
