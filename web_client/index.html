@@ -19,6 +19,7 @@
             <button class="tab-button" data-tab="speech">音声認識</button>
             <button class="tab-button" data-tab="image">画像生成</button>
             <button class="tab-button" data-tab="tts">音声生成</button>
+            <button class="tab-button" data-tab="tools">関数呼び出し</button>
         </div>
 
         <div class="tab-content">
@@ -236,6 +237,37 @@
                     </div>
                     <div id="tts-loading" class="loading-indicator hidden">生成中...</div>
                     <div id="tts-result" class="result-box audio-result"></div>
+                </div>
+            </div>
+
+            <!-- 関数呼び出しタブ -->
+            <div class="tab-pane" id="tools-tab">
+                <h2>関数呼び出し (Function Call)</h2>
+                <div class="form-group">
+                    <label for="tools-model">モデル選択:</label>
+                    <select id="tools-model">
+                        <option value="OpenAI/gpt-4o-mini">OpenAI GPT-4o Mini</option>
+                        <option value="SambaNova/Meta-Llama-3.3-70B-Instruct">SambaNova Meta Llama 3.3 70B Instruct</option>
+                        <option value="Google/gemini-2.0-flash">Google Gemini 2.0 Flash</option>
+                        <option value="Ollama/qwen2.5:32b">Ollama Qwen 2.5 32B[local]</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="tools-prompt">プロンプト:</label>
+                    <textarea id="tools-prompt" rows="4" placeholder="質問や指示を入力してください...">東京の今日の天気を教えてください。</textarea>
+                </div>
+                <button id="execute-function-call" class="action-button">実行</button>
+                <div class="form-group response-time-container">
+                    <p>処理時間: <span class="tools-response-time">-</span> ms</p>
+                </div>
+                <div class="result-container">
+                    <div class="result-header">
+                        <h3>結果:</h3>
+                        <button class="reset-results" data-tab="tools">リセット</button>
+                    </div>
+                    <div id="tools-loading" class="loading-indicator hidden">処理中...</div>
+                    <div id="function-calls-log" class="result-box function-call-log"></div>
+                    <div id="tools-result" class="result-box"></div>
                 </div>
             </div>
 
