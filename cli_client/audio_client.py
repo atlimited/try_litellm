@@ -17,9 +17,10 @@ encoded_string = base64.b64encode(wav_data).decode('utf-8')
 
 # モデル選択（使用したいモデルのコメントを外す）
 #model_name = "gpt-4o-audio-preview"
-model_name = "Whisper-Large-v3"
-#model_name = 'whisper-1'
-#model_name = 'gpt-4o-mini-transcribe'
+#model_name = "SambaNova/Whisper-Large-v3"
+model_name = "SambaNova/Qwen2-Audio-7B-Instruct"
+#model_name = 'OpenAI/whisper-1'
+#model_name = 'OpenAI/gpt-4o-mini-transcribe'
 
 if model_name == "gpt-4o-audio-preview":
     completion = client.chat.completions.create(
@@ -56,7 +57,7 @@ else:
         response = client.audio.transcriptions.create(
             model=model_name,
             file=audio_file,
-            language="ja"  # 明示的に日本語を指定
+            #language="ja"  # 明示的に日本語を指定
         )
     
     print(response)
