@@ -51,13 +51,31 @@ function displayFunctionAndToolDefinitions() {
     const toolContainer = document.getElementById('tool-definitions');
     
     if (functionContainer && toolContainer) {
-        // 関数の実装を表示
+        // 関数の実装を表示（preタグとcodeタグで囲む）
         const functionImpl = getCurrentWeather.toString();
-        functionContainer.textContent = functionImpl;
+        functionContainer.innerHTML = `<pre><code class="language-javascript">${escapeHtml(functionImpl)}</code></pre>`;
         
-        // ツール定義を表示
-        toolContainer.textContent = JSON.stringify(tools, null, 2);
+        // ツール定義を表示（preタグとcodeタグで囲む）
+        const toolDefinitionsStr = JSON.stringify(tools, null, 8);
+        toolContainer.innerHTML = `<pre><code class="language-json">${escapeHtml(toolDefinitionsStr)}</code></pre>`;
+        
+        // highlight.jsを初期化して適用
+        if (window.hljs) {
+            document.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        }
     }
+}
+
+// HTMLエスケープ用ヘルパー関数
+function escapeHtml(unsafe) {
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 // ページ読み込み時に関数とツール定義を表示
