@@ -18,17 +18,24 @@ HEADERS = {
     "Content-Type": "application/json",
 }
 
-# サンプル関数: 指定した場所の天気を返す
+## サンプル関数: 指定した場所の天気を返す
 def get_current_weather(location, unit="fahrenheit"):
     """Get the current weather in a given location"""
     if "tokyo" in location.lower():
-        return json.dumps({"location": "Tokyo", "temperature": "10", "unit": "celsius"})
+        location = "Tokyo"
+        temperature = "10"
+        unit = "celsius"
     elif "san francisco" in location.lower():
-        return json.dumps({"location": "San Francisco", "temperature": "72", "unit": "fahrenheit"})
+        location = "San Francisco"
+        temperature = "72"
+        unit = "fahrenheit"
     elif "paris" in location.lower():
-        return json.dumps({"location": "Paris", "temperature": "22", "unit": "celsius"})
+        location = "Paris"
+        temperature = "22"
+        unit = "celsius"
     else:
-        return json.dumps({"location": location, "temperature": "unknown"})
+        temperature = "undefined"
+    return json.dumps({"location": location, "temperature": temperature, "unit": unit})
 
 def run_tool_call(message, model):
     """Function callingを使ってメッセージを処理し、必要に応じてツールを呼び出す"""
@@ -112,7 +119,7 @@ def run_tool_call(message, model):
             second_payload = {
                 "model": model,
                 "messages": messages,
-                "tools": tools, # anthropicでは2回目も必要
+                "tools": tools, # anthropicでは2回目も必要, Ollamaや性能の低いモデルの場合、あると関数呼び出しされるのでcontentが空で返却される
                 "tool_choice": "auto", # anthropicでは2回目も必要
             }
 
