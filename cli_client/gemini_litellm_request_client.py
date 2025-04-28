@@ -11,6 +11,7 @@ import requests
 from PIL import Image
 import io
 import time
+import re
 
 ## mitmproxy を利用するため、環境変数でプロキシ設定を行います
 os.environ["HTTP_PROXY"] = "http://127.0.0.1:8080"
@@ -299,172 +300,87 @@ def transcribe_audio(
         return ""
 
 def generate_image(
-    prompt: str, 
-    output_path: str = "generated_images/generated_image.png",
-    model: str = "Google/gemini-2.0-flash-exp-image-generation"
-) -> str:
+    prompt, 
+    output_dir="generated_images",
+    filename="generated_image.png",
+    model="Google/gemini-2.0-flash-exp-image-generation"
+):
     """
-    プロンプトに基づいて画像を生成し、指定されたパスに保存する
-    requestsライブラリで直接LiteLLMプロキシに接続し、失敗した場合は直接Gemini APIを呼び出す
+    プロンプトから画像を生成する
     
     Args:
         prompt: 画像生成のプロンプト
-        output_path: 生成した画像を保存するパス
-        model: 使用するモデル名
+        output_dir: 出力ディレクトリ
+        filename: 出力ファイル名
+        model: 使用するモデル
         
     Returns:
         生成された画像のパス
     """
     print(f"📝 プロンプト: {prompt}")
     print(f"🤖 モデル: {model}")
-    print("🔄 画像を生成中...")
+    print(f"🔄 画像を生成中...")
     
-    # LiteLLMプロキシ経由で画像生成を試みる
+    # 出力パス
+    output_path = os.path.join(output_dir, filename)
+    
+    # LiteLLMプロキシのエンドポイント
+    url = f"{LITELLM_API_BASE}/chat/completions"
+    
+    # ヘッダー
+    headers = {
+        "Content-Type": "application/json"
+    }
+    
     try:
-        url = f"{LITELLM_API_BASE}/images/generations"
-        
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {GEMINI_API_KEY}"
-        }
-        
+        # LiteLLMプロキシ用のペイロード
         payload = {
             "model": model,
-            "prompt": prompt,
-            "n": 1,
-            "size": "1024x1024"
+            "messages": [
+                {
+                    "role": "user", 
+                    "content": prompt
+                }
+            ],
+            "modalities": ["image", "text"]  # モダリティパラメータを追加
         }
         
-        response = requests.post(url, headers=headers, json=payload)
-        response.raise_for_status()
-        
-        result = response.json()
-        
-        if "data" in result and len(result["data"]) > 0:
-            image_data = result["data"][0]
-            
-            if "url" in image_data and image_data["url"]:
-                # URLから画像をダウンロード
-                img_response = requests.get(image_data["url"])
-                img_response.raise_for_status()
-                # 出力ディレクトリが存在しない場合は作成
-                os.makedirs(os.path.dirname(output_path), exist_ok=True)
-                # 画像を保存
-                with open(output_path, "wb") as f:
-                    f.write(img_response.content)
-                print(f"✅ 画像を {output_path} に保存しました")
-                return output_path
-                
-            elif "b64_json" in image_data and image_data["b64_json"]:
-                # Base64データから画像を保存
-                img_data = base64.b64decode(image_data["b64_json"])
-                # 出力ディレクトリが存在しない場合は作成
-                os.makedirs(os.path.dirname(output_path), exist_ok=True)
-                # 画像を保存
-                with open(output_path, "wb") as f:
-                    f.write(img_data)
-                print(f"✅ 画像を {output_path} に保存しました")
-                return output_path
-                
-        print(f"⚠️ LiteLLMプロキシ経由の画像生成に失敗しました。直接APIを呼び出します...")
-            
-    except Exception as e:
-        print(f"⚠️ LiteLLMプロキシでのエラー: {str(e)}")
-        if hasattr(e, 'response') and hasattr(e.response, 'text'):
-            print(f"レスポンス: {e.response.text}")
-        print("直接Gemini APIを呼び出します...")
-    
-    # 直接Gemini APIを呼び出す
-    try:
-        # Gemini APIエンドポイント
-        GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
-        url = f"{GEMINI_API_BASE}/{model.replace('Google/', '')}:generateContent?key={GEMINI_API_KEY}"
-        
-        # ヘッダー
-        headers = {
-            "Content-Type": "application/json"
-        }
-        
-        # リクエスト本文 - Gemini 画像生成用の正しい形式
-        payload = {
-            "contents": [{
-                "parts": [{
-                    "text": prompt
-                }]
-            }],
-            "generationConfig": {
-                "temperature": 0.4,
-                "top_p": 1,
-                "top_k": 32,
-                "responseModalities": ["TEXT", "IMAGE"]
-            }
-        }
-        
-        # API呼び出し
+        # LiteLLMプロキシAPIを呼び出す
         response = requests.post(url, headers=headers, json=payload)
         response.raise_for_status()
         
         # レスポンスをパース
         result = response.json()
         
-        # レスポンスから画像データを取得
-        if "candidates" in result and len(result["candidates"]) > 0:
-            candidate = result["candidates"][0]
-            if "content" in candidate and "parts" in candidate["content"]:
-                for part in candidate["content"]["parts"]:
-                    if "inlineData" in part and part["inlineData"]["mimeType"].startswith("image/"):
-                        # Base64エンコードされた画像データ
-                        image_data = base64.b64decode(part["inlineData"]["data"])
-                        
-                        # 出力ディレクトリが存在しない場合は作成
-                        os.makedirs(os.path.dirname(output_path), exist_ok=True)
-                        
-                        # 画像を保存
-                        with open(output_path, "wb") as f:
-                            f.write(image_data)
-                        
-                        print(f"✅ 画像を {output_path} に保存しました")
-                        return output_path
-        
-        # 最新のImagen APIモデルを使う方法を試す
-        try:
-            imagen_url = "https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-flash:generateContent?key=" + GEMINI_API_KEY
-            
-            imagen_payload = {
-                "contents": [{
-                    "parts": [{
-                        "text": prompt
-                    }]
-                }]
-            }
-            
-            imagen_response = requests.post(imagen_url, headers=headers, json=imagen_payload)
-            imagen_response.raise_for_status()
-            
-            imagen_result = imagen_response.json()
-            
-            # 画像データ取得のロジック
-            if "candidates" in imagen_result and len(imagen_result["candidates"]) > 0:
-                candidate = imagen_result["candidates"][0]
-                if "content" in candidate and "parts" in candidate["content"]:
-                    for part in candidate["content"]["parts"]:
-                        if "inlineData" in part and part["inlineData"]["mimeType"].startswith("image/"):
-                            image_data = base64.b64decode(part["inlineData"]["data"])
-                            os.makedirs(os.path.dirname(output_path), exist_ok=True)
-                            with open(output_path, "wb") as f:
-                                f.write(image_data)
-                            print(f"✅ Imagen APIで画像を {output_path} に保存しました")
-                            return output_path
-            
+        # 画像データを探す
+        if "choices" in result and len(result["choices"]) > 0:
+            choice = result["choices"][0]
+            if "message" in choice and "content" in choice["message"]:
+                content = choice["message"]["content"]
+                
+                # Base64エンコードされた画像を探す
+                image_pattern = r"data:image\/(\w+);base64,([^\"]+)"
+                matches = re.findall(image_pattern, content)
+                
+                if matches:
+                    # 最初の画像を使用
+                    img_format, img_data = matches[0]
+                    # Base64データをデコード
+                    img_bytes = base64.b64decode(img_data)
+                    
+                    # 出力ディレクトリが存在しない場合は作成
+                    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+                    
+                    # 画像を保存
+                    with open(output_path, "wb") as f:
+                        f.write(img_bytes)
+                    
+                    print(f"✅ 画像を {output_path} に保存しました")
+                    return output_path
+        else:
             print("❌ 画像データが見つかりません")
             return ""
             
-        except Exception as alt_e:
-            print(f"❌ Imagen API呼び出しでエラーが発生しました: {str(alt_e)}")
-            if hasattr(alt_e, 'response') and hasattr(alt_e.response, 'text'):
-                print(f"レスポンス: {alt_e.response.text}")
-            return ""
-        
     except Exception as e:
         print(f"❌ エラーが発生しました: {str(e)}")
         if hasattr(e, 'response') and hasattr(e.response, 'text'):
@@ -545,7 +461,7 @@ def main():
     elif args.command == "speech":
         transcribe_audio(args.audio, args.language, args.model)
     elif args.command == "image":
-        generate_image(args.prompt, args.output, args.model)
+        generate_image(args.prompt, os.path.dirname(args.output), os.path.basename(args.output), args.model)
     else:
         parser.print_help()
         sys.exit(1)
