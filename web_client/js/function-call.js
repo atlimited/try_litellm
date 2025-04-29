@@ -103,8 +103,15 @@ async function executeFunctionCall() {
     const startTime = Date.now();
     
     try {
-        // メッセージの準備
-        const messages = [{"role": "user", "content": prompt}];
+        // システムプロンプトの取得
+        const systemPrompt = document.getElementById('tools-system-prompt').value;
+        
+        // メッセージの準備（システムプロンプトがある場合は追加）
+        const messages = [];
+        if (systemPrompt) {
+            messages.push({"role": "system", "content": systemPrompt});
+        }
+        messages.push({"role": "user", "content": prompt});
         
         // リクエストペイロード
         const payload = {

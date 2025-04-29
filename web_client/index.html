@@ -281,6 +281,47 @@
                     </select>
                 </div>
                 <div class="form-group">
+                    <label for="tools-system-prompt">システムプロンプト:</label>
+                    <textarea id="tools-system-prompt" rows="8" placeholder="システムプロンプトを入力してください...">あなたは優秀なアシスタントです。
+
+必要に応じて以下のツールを呼び出してください。
+ツール呼び出しが不要な場合は文章で返答してください。
+
+Given the following functions, please respond with a function call that best answers the given prompt.
+
+Respond in the format:
+{
+  "name": "function name", 
+  "parameters": {
+    "param1": "value1",
+    "param2": "value2"
+  }
+}
+
+# available tools
+{
+  "type": "function",
+  "function": {
+    "name": "get_current_weather",
+    "description": "Get the current weather in a given location",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "location": {
+          "type": "string",
+          "description": "The city and state, e.g. San Francisco, CA"
+        },
+        "unit": {
+          "type": "string",
+          "enum": ["celsius", "fahrenheit"]
+        }
+      },
+      "required": ["location"]
+    }
+  }
+}</textarea>
+                </div>
+                <div class="form-group">
                     <label for="tools-prompt">プロンプト:</label>
                     <textarea id="tools-prompt" rows="4" placeholder="質問や指示を入力してください...">tokyoの今日の天気を教えてください。</textarea>
                 </div>
