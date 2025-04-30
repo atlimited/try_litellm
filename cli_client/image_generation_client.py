@@ -32,7 +32,6 @@ API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
 # モデル選択（使用したいモデルのコメントを外す）
 model_name = "OpenAI/dall-e-3"
-#model_name = "Google/gemini-2.0-flash"
 
 # 出力ディレクトリの設定
 output_dir = Path("./generated_images")
