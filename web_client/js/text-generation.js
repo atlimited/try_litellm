@@ -70,3 +70,11 @@ async function generateText() {
         button.textContent = 'テキスト生成';
     }
 }
+
+// Node.js環境とブラウザ環境の両方で動作するように、モジュールエクスポートを追加
+// テスト用にエクスポート
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        generateText
+    };
+}

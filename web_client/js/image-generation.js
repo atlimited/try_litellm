@@ -84,3 +84,10 @@ async function generateImage() {
         loadingIndicator.classList.add('hidden');
     }
 }
+
+// テスト用にエクスポート
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        generateImage
+    };
+}

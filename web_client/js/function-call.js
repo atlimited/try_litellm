@@ -226,3 +226,15 @@ async function executeFunctionCall() {
         loadingIndicator.classList.add('hidden');
     }
 }
+
+// Node.js環境とブラウザ環境の両方で動作するように、モジュールエクスポートを追加
+// テスト用にエクスポート
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        getCurrentWeather,
+        escapeHtml,
+        displayFunctionAndToolDefinitions,
+        executeFunctionCall,
+        tools
+    };
+}

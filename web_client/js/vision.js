@@ -164,3 +164,23 @@ function setupVisionImageInput() {
         }
     }, 500));
 }
+
+// ファイルをBase64にエンコードする関数
+async function getBase64FromFile(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+    });
+}
+
+// Node.js環境とブラウザ環境の両方で動作するように、モジュールエクスポートを追加
+// テスト用にエクスポート
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        analyzeImage,
+        setupVisionImageInput,
+        getBase64FromFile
+    };
+}

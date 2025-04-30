@@ -94,3 +94,12 @@ function resetResults(tabId) {
     // 保存結果一覧を更新
     updateSavedResultsView();
 }
+
+// テスト用にエクスポート
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        setupTabs,
+        resetResults,
+        LITELLM_PROXY_URL
+    };
+}

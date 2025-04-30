@@ -291,3 +291,16 @@ async function getBase64FromFile(file) {
         reader.onerror = error => reject(error);
     });
 }
+
+// モジュールエクスポート（テスト用）
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        debounce,
+        getMimeTypeFromFileName,
+        getBase64FromFile,
+        clearRequestLog,
+        addRequestToLog,
+        updateRequestLogUI,
+        setupRequestInterceptor
+    };
+}

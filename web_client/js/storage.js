@@ -215,3 +215,15 @@ function loadStoredResults() {
     // 保存結果一覧を表示
     updateSavedResultsView();
 }
+
+// モジュールエクスポート（テスト用）
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        saveResult,
+        updateSavedResultsView,
+        deleteResult,
+        displayResult,
+        getSavedResults,
+        loadStoredResults
+    };
+}

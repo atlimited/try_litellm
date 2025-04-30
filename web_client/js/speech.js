@@ -341,3 +341,13 @@ async function generateTTS() {
         loadingIndicator.classList.add('hidden');
     }
 }
+
+// テスト用にエクスポート
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        setupSpeechAudioInput,
+        setupAudioRecording,
+        transcribeAudio,
+        generateTTS
+    };
+}
