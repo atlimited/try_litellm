@@ -28,8 +28,11 @@ BASE_URL = "http://0.0.0.0:4000/v1"
 # APIキー（環境変数から取得するか、空文字列を使用）
 API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
-# デフォルトのモデル
-DEFAULT_MODEL = "OpenAI/gpt-4o-mini"
+# モデル選択（使用したいモデルのコメントを外す）
+#model_name = "OpenAI/gpt-4o-mini"
+#model_name = "Google/gemini-2.0-flash"
+model_name = "SambaNova/Meta-Llama-3.3-70B-Instruct"
+#model_name = "SambaNova/Llama-4-Maverick-17B-128E-Instruct"
 
 # OpenAIクライアントのインスタンス（利用可能な場合）
 openai_client = None
@@ -91,7 +94,7 @@ def execute_function_call(function_name, function_args):
     else:
         return json.dumps({"error": f"Unknown function: {function_name}"})
 
-def run_tool_call_with_openai(message: str, model: str = DEFAULT_MODEL) -> str:
+def run_tool_call_with_openai(message: str, model: str = model_name) -> str:
     """
     OpenAIクライアントを使用してFunction Callingリクエストを送信
     
@@ -189,7 +192,7 @@ def run_tool_call_with_openai(message: str, model: str = DEFAULT_MODEL) -> str:
         print("↪️ requestsモードで再試行します")
         return run_tool_call_with_requests(message, model)
 
-def run_tool_call_with_requests(message: str, model: str = DEFAULT_MODEL) -> str:
+def run_tool_call_with_requests(message: str, model: str = model_name) -> str:
     """
     requestsライブラリを使用してFunction Callingリクエストを送信
     
@@ -294,7 +297,7 @@ def run_tool_call_with_requests(message: str, model: str = DEFAULT_MODEL) -> str
             print(f"レスポンス: {e.response.text}")
         return ""
 
-def run_tool_call(message: str, model: str = DEFAULT_MODEL, client_type: str = "auto") -> str:
+def run_tool_call(message: str, model: str = model_name, client_type: str = "auto") -> str:
     """
     Function Callingリクエストを送信（統合インターフェース）
     
@@ -327,7 +330,7 @@ def main():
     """
     parser = argparse.ArgumentParser(description="統合Function Callingクライアント")
     parser.add_argument("message", help="LLMに送信するメッセージ")
-    parser.add_argument("--model", "-m", default=DEFAULT_MODEL, help="使用するモデル名")
+    parser.add_argument("--model", "-m", default=model_name, help="使用するモデル名")
     parser.add_argument("--client", "-c", choices=["openai", "requests", "auto"], default="auto",
                       help="使用するクライアントタイプ（openai/requests/auto）")
     
