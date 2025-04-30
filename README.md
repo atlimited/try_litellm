@@ -1,37 +1,52 @@
 # LiteLLM クライアントアプリケーション
 
-LiteLLM プロキシを通じて様々な言語モデル（OpenAI、Anthropic、Gemini など）にアクセスできるクライアントアプリケーションです。Web インターフェースとコマンドラインの両方から利用できます。
+このプロジェクトは、[LiteLLM](https://github.com/BerriAI/litellm) プロキシを通じて様々な言語モデル（OpenAI、Anthropic、Gemini など）にアクセスできる統合クライアントアプリケーションです。LiteLLMの主な利点は、複数のLLMプロバイダーに対して統一されたインターフェースを提供することで、アプリケーションがプロバイダー間で簡単に切り替えられることです。
 
 ## 主な機能
 
-- **テキスト生成**: 様々なモデルを使用したテキスト生成
-- **画像生成**: DALL-E や Stable Diffusion などによる画像生成
-- **画像認識**: 画像の分析とテキスト説明（Vision API）
+- **統一インターフェース**: 様々なLLMプロバイダーに対して一貫したAPIを提供
+- **テキスト生成**: 各種モデルを使用したテキスト生成と会話
+- **画像認識**: マルチモーダルモデルを活用した画像分析（Vision API）
 - **音声認識**: 音声からテキストへの変換（Speech-to-Text）
 - **音声合成**: テキストから音声への変換（Text-to-Speech）
 - **関数呼び出し**: LLMによる関数呼び出し機能（Function Calling）
-- **マルチモーダル対応**: テキスト、画像、音声を組み合わせた入力が可能
+- **フォールバック機能**: 一つのプロバイダーが失敗した場合に別のプロバイダーに切り替え可能
+
+## アーキテクチャ
+
+このプロジェクトは主にLiteLLMプロキシを使用して、様々なLLMプロバイダーにアクセスします：
+
+1. **コアクライアント**
+   - `text_client.py` - テキスト生成のための基本クライアント
+   - `vision_client.py` - 画像認識のためのクライアント
+   - `speech_client.py` - 音声認識（Speech-to-Text）のためのクライアント
+   - `tts_client.py` - 音声合成（Text-to-Speech）のためのクライアント
+   - `tools_client.py` - 関数呼び出し機能のためのクライアント
+
+2. **モデル特化クライアント**
+   - `gemini_litellm_client.py` - Gemini向けのLiteLLMクライアント実装
+   - `gemini_direct_requests_client.py` - 比較用の直接API呼び出し実装
 
 ## 前提条件
 
 - Python 3.8以上
 - Node.js 16以上（Webクライアント用）
 - [LiteLLM](https://github.com/BerriAI/litellm) がインストールされていること
-- 各種APIキー（OpenAI、Anthropic、Googleなど使用するサービスに応じて）
+- 各種APIキー（使用するプロバイダーに応じて）
 
 ## セットアップ
 
 ### 1. リポジトリのクローン
 
 ```bash
-git clone https://github.com/yourusername/try_litellm.git
+git clone https://github.com/atlimited/try_litellm.git
 cd try_litellm
 ```
 
 ### 2. 依存パッケージのインストール
 
 ```bash
-pip install -r requiremens.txt
+pip install -r requirements.txt
 ```
 
 Webクライアント用の依存パッケージも必要な場合：
@@ -78,60 +93,96 @@ python -m http.server 8000
 ```
 
 2. ブラウザで `http://localhost:8000` にアクセスします
-3. 各種機能タブ（テキスト、画像生成、音声など）を選択して利用できます
+3. 各種機能タブを選択して利用できます
 
 ### コマンドラインクライアント
 
-各機能ごとに専用のクライアントが用意されています：
+#### テキスト生成
 
-**テキスト生成**:
 ```bash
 cd cli_client
 python text_client.py "ここに質問やプロンプトを入力"
 ```
 
-**画像生成**:
-```bash
-python image_generation_client.py "画像の説明"
-```
+#### 画像認識
 
-**画像認識**:
 ```bash
 python vision_client.py "画像について質問" path/to/image.jpg
 ```
 
-**音声認識**:
+#### 音声認識
+
 ```bash
-python audio_client.py path/to/audio_file.mp3
+python speech_client.py path/to/audio_file.mp3
 ```
 
-**テキスト読み上げ**:
+#### 音声合成
+
 ```bash
-python tts_client.py "読み上げるテキスト"
+python tts_client.py "読み上げるテキスト" output_filename.mp3
 ```
 
-**関数呼び出し**:
+#### 関数呼び出し
+
 ```bash
 python tools_client.py "天気を教えて" 
 ```
 
-## 設定カスタマイズ
+#### Geminiモデル向けクライアント
 
-`litellm.config` ファイルを編集することで、使用可能なモデルの設定をカスタマイズできます。
-詳細は [LiteLLMのドキュメント](https://litellm.vercel.app/docs/proxy/configuration) を参照してください。
+テキストチャット:
+```bash
+python gemini_litellm_client.py chat "ここに質問やプロンプトを入力"
+```
 
-## 開発とテスト
+画像認識:
+```bash
+python gemini_litellm_client.py vision "画像について質問" path/to/image.jpg
+```
 
-### Webクライアントのテスト
+## LiteLLMのメリット
 
-Webクライアントには包括的なテストが実装されています：
+このプロジェクトでは、LiteLLMを使用することで以下のメリットを得ています：
+
+1. **プロバイダーの抽象化**: 複数のLLMプロバイダー（OpenAI、Anthropic、Googleなど）を統一インターフェースで利用
+2. **簡単な切り替え**: 設定を変更するだけで、異なるプロバイダーやモデルに切り替え可能
+3. **コスト最適化**: プロバイダーごとの価格差を活用して、利用コストを最適化
+4. **フォールバック**: 一つのプロバイダーが停止していても、別のプロバイダーに自動的に切り替え可能
+5. **一貫した応答形式**: 異なるプロバイダーからの応答を統一された形式で受け取れる
+
+## LiteLLM設定
+
+`litellm.config` ファイルでは、利用可能なモデルとルーティングを設定できます。詳細は [LiteLLMのドキュメント](https://litellm.vercel.app/docs/proxy/configuration) を参照してください。
+
+例えば、以下のような設定が可能です：
+- 異なるプロバイダー間のフェイルオーバー
+- コスト最適化のためのモデル選択
+- キャッシュ設定
+- レート制限
+
+## テスト
+
+### Pythonクライアントのテスト
+
+クライアントの機能を検証するためのテスト：
+
+```bash
+cd cli_client
+python -m unittest tests/test_text_client.py
+python -m unittest tests/test_gemini_litellm_client.py
+pytest tests/test_gemini_direct_requests_client.py
+```
+
+### JavaScriptクライアントのテスト
+
+Webクライアントのテスト：
 
 ```bash
 cd web_client
 npm test
 ```
 
-特定のモジュールのみテストする場合：
+特定のテストファイルだけを実行：
 
 ```bash
 npm test -- __tests__/text-generation.test.js
@@ -142,15 +193,6 @@ npm test -- __tests__/text-generation.test.js
 ```bash
 npm test -- --coverage
 ```
-
-## Gemini対応
-
-このクライアントは、LiteLLM プロキシを通じて Gemini のマルチモーダル機能を使用することができます。
-Gemini APIの特性に合わせたリクエスト形式を自動的に構築します：
-
-- 画像生成時には `modalities` パラメータを適切に設定
-- マルチモーダル入力（テキスト＋画像）の場合、`content` フィールドを配列形式で構成
-- 画像入力には `image_url` 形式でBase64エンコード画像を含める
 
 ## 注意事項
 

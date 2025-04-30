@@ -1,6 +1,11 @@
 venv/
 node_modules/
+coverage/
+__pycache__
 logs/
 generated_audio/
 generated_images/
+test_audio/
+test_images/
 test.py
+.pytest_cache
